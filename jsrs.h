@@ -10,7 +10,9 @@
 #include <map>
 #include <memory>
 
-class JSRS final {
+namespace jstp {
+
+class JSRS {
 
   typedef std::string string;
   typedef std::vector<JSRS> array;
@@ -29,14 +31,11 @@ class JSRS final {
   JSRS(bool val);                  // BOOL
 
   JSRS(const string &val);         // STRING
-  JSRS(string &&val);              // STRING
   JSRS(const char *value);         // STRING
 
   JSRS(const array &values);       // ARRAY
-  JSRS(array &&values);            // ARRAY
 
   JSRS(const object &values);      // OBJECT
-  JSRS(object &&values);           // OBJECT
 
 
 
@@ -131,7 +130,49 @@ class JSRS final {
 
     virtual ~JS_value() { }
   };
+
+  class JS_number : JS_value {
+   public:
+    JS_number(double value);
+   private:
+    double value;
+  };
+
+  class JS_boolean : JS_value {
+   public:
+    JS_boolean(bool value);
+   private:
+    bool value;
+  };
+
+  class JS_string : JS_value {
+   public:
+    JS_string(const string &value);
+   private:
+    string value;
+  };
+
+  class JS_array : JS_value {
+   public:
+    JS_array(const array &values);
+   private:
+    array values;
+  };
+
+  class JS_object : JS_value {
+   public:
+    JS_object(const object &value);
+   private:
+    object values;
+  };
+
+  class JS_undefined : JS_value { };
+
+  class JS_null : JS_value { };
+
 };
+
+}
 
 
 #endif //JSTP_CPP_JSRS_H
