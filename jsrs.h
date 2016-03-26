@@ -10,11 +10,11 @@
 #include <map>
 #include <memory>
 
-class JSTP_parser final {
+class JSRS final {
 
     typedef std::string string;
-    typedef std::vector<JSTP_parser> array;
-    typedef std::map<std::string, JSTP_parser> object;
+    typedef std::vector<JSRS> array;
+    typedef std::map<std::string, JSRS> object;
 
 public:
 
@@ -22,21 +22,21 @@ public:
         UNDEFINED, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
     };
 
-    JSTP_parser();                          // UNDEFINED
-    JSTP_parser(std::nullptr_t);            // NUL
+    JSRS();                          // UNDEFINED
+    JSRS(std::nullptr_t);            // NUL
 
-    JSTP_parser(double val);                // NUMBER
-    JSTP_parser(bool val);                  // BOOL
+    JSRS(double val);                // NUMBER
+    JSRS(bool val);                  // BOOL
 
-    JSTP_parser(const string& val);         // STRING
-    JSTP_parser(string&& val);              // STRING
-    JSTP_parser(const char* value);         // STRING
+    JSRS(const string& val);         // STRING
+    JSRS(string&& val);              // STRING
+    JSRS(const char* value);         // STRING
 
-    JSTP_parser(const array& values);       // ARRAY
-    JSTP_parser(array&& values);            // ARRAY
+    JSRS(const array& values);       // ARRAY
+    JSRS(array&& values);            // ARRAY
 
-    JSTP_parser(const object& values);      // OBJECT
-    JSTP_parser(object&& values);           // OBJECT
+    JSRS(const object& values);      // OBJECT
+    JSRS(object&& values);           // OBJECT
 
 
 
@@ -78,12 +78,12 @@ public:
     /**
      * Return a reference to arr[i] if this is an array, UNDEFINED JSTP otherwise.
      */
-    const JSTP_parser& operator[](size_t i) const;
+    const JSRS& operator[](size_t i) const;
 
     /*
      * Return a reference to obj[key] if this is an object, UNDEFINED JSTP otherwise.
      */
-    const JSTP_parser& operator[](const string &key) const;
+    const JSRS& operator[](const string &key) const;
 
     /**
      * Serializator
@@ -93,14 +93,14 @@ public:
     /*
      * Parser of a Record Serialization
      */
-    static JSTP_parser parse(const string& in, string& err);
+    static JSRS parse(const string& in, string& err);
 
-    bool operator== (const JSTP_parser &rhs) const;
-    bool operator<  (const JSTP_parser &rhs) const;
-    bool operator!= (const JSTP_parser &rhs) const;
-    bool operator<= (const JSTP_parser &rhs) const;
-    bool operator>  (const JSTP_parser &rhs) const;
-    bool operator>= (const JSTP_parser &rhs) const;
+    bool operator== (const JSRS &rhs) const;
+    bool operator<  (const JSRS &rhs) const;
+    bool operator!= (const JSRS &rhs) const;
+    bool operator<= (const JSRS &rhs) const;
+    bool operator>  (const JSRS &rhs) const;
+    bool operator>= (const JSRS &rhs) const;
 
 
 private:
@@ -109,10 +109,10 @@ private:
 
     /**
      * Inner class for storing values
-     * Behaviour of methods is similar to JSTP_parser one`s
+     * Behaviour of methods is similar to JSRS one`s
      */
     class JS_value {
-        friend class JSTP_parser;
+        friend class JSRS;
     protected:
         virtual Type type() const = 0;
 
@@ -126,8 +126,8 @@ private:
         virtual const array& array_items() const;
         virtual const object &object_items() const;
 
-        virtual const JSTP_parser& operator[](size_t i) const;
-        virtual const JSTP_parser& operator[](const std::string &key) const;
+        virtual const JSRS& operator[](size_t i) const;
+        virtual const JSRS& operator[](const std::string &key) const;
 
         virtual ~JS_value() {}
     };
