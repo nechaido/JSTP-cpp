@@ -2,8 +2,8 @@
 // Created by nechaido on 25.03.16.
 //
 
-#ifndef JSTP_CPP_JSTPPARSER_H
-#define JSTP_CPP_JSTPPARSER_H
+#ifndef JSTP_CPP_JSRS_H
+#define JSTP_CPP_JSRS_H
 
 #include <string>
 #include <vector>
@@ -12,126 +12,126 @@
 
 class JSRS final {
 
-    typedef std::string string;
-    typedef std::vector<JSRS> array;
-    typedef std::map<std::string, JSRS> object;
+  typedef std::string string;
+  typedef std::vector<JSRS> array;
+  typedef std::map<std::string, JSRS> object;
 
-public:
+ public:
 
-    enum Type {
-        UNDEFINED, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
-    };
+  enum Type {
+    UNDEFINED, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
+  };
 
-    JSRS();                          // UNDEFINED
-    JSRS(std::nullptr_t);            // NUL
+  JSRS();                          // UNDEFINED
+  JSRS(std::nullptr_t);            // NUL
 
-    JSRS(double val);                // NUMBER
-    JSRS(bool val);                  // BOOL
+  JSRS(double val);                // NUMBER
+  JSRS(bool val);                  // BOOL
 
-    JSRS(const string& val);         // STRING
-    JSRS(string&& val);              // STRING
-    JSRS(const char* value);         // STRING
+  JSRS(const string &val);         // STRING
+  JSRS(string &&val);              // STRING
+  JSRS(const char *value);         // STRING
 
-    JSRS(const array& values);       // ARRAY
-    JSRS(array&& values);            // ARRAY
+  JSRS(const array &values);       // ARRAY
+  JSRS(array &&values);            // ARRAY
 
-    JSRS(const object& values);      // OBJECT
-    JSRS(object&& values);           // OBJECT
-
-
-
-    Type type() const;
-
-    bool is_undefined() const { return  type() == UNDEFINED; };
-    bool is_null() const { return  type() == NUL; };
-    bool is_bool() const { return  type() == BOOL; };
-    bool is_number() const { return  type() == NUMBER; };
-    bool is_string() const { return  type() == STRING; };
-    bool is_array() const { return  type() == ARRAY; };
-    bool is_object() const { return  type() == OBJECT; };
-
-    /**
-     * Returns the enclosed value if this is a boolean, false otherwise
-     */
-    bool bool_value() const;
-
-    /**
-     * Returns the enclosed value if this is a number, 0 otherwise
-     */
-    double number_value() const;
-
-    /**
-     * Returns the enclosed value if this is a string, '' otherwise
-     */
-    const string& string_value() const;
-
-    /**
-     * Return the enclosed std::vector if this is an array, or an empty vector otherwise.
-     */
-    const array& array_items() const;
-    /**
-     * Return the enclosed std::map if this is an object, or an empty map otherwise.
-     */
-    const object& object_items() const;
+  JSRS(const object &values);      // OBJECT
+  JSRS(object &&values);           // OBJECT
 
 
-    /**
-     * Return a reference to arr[i] if this is an array, UNDEFINED JSTP otherwise.
-     */
-    const JSRS& operator[](size_t i) const;
 
-    /*
-     * Return a reference to obj[key] if this is an object, UNDEFINED JSTP otherwise.
-     */
-    const JSRS& operator[](const string &key) const;
+  Type type() const;
 
-    /**
-     * Serializator
-     */
-    string dump() const;
+  bool is_undefined() const { return type() == UNDEFINED; };
+  bool is_null() const { return type() == NUL; };
+  bool is_bool() const { return type() == BOOL; };
+  bool is_number() const { return type() == NUMBER; };
+  bool is_string() const { return type() == STRING; };
+  bool is_array() const { return type() == ARRAY; };
+  bool is_object() const { return type() == OBJECT; };
 
-    /*
-     * Parser of a Record Serialization
-     */
-    static JSRS parse(const string& in, string& err);
+  /**
+   * Returns the enclosed value if this is a boolean, false otherwise
+   */
+  bool bool_value() const;
 
-    bool operator== (const JSRS &rhs) const;
-    bool operator<  (const JSRS &rhs) const;
-    bool operator!= (const JSRS &rhs) const;
-    bool operator<= (const JSRS &rhs) const;
-    bool operator>  (const JSRS &rhs) const;
-    bool operator>= (const JSRS &rhs) const;
+  /**
+   * Returns the enclosed value if this is a number, 0 otherwise
+   */
+  double number_value() const;
+
+  /**
+   * Returns the enclosed value if this is a string, '' otherwise
+   */
+  const string &string_value() const;
+
+  /**
+   * Return the enclosed std::vector if this is an array, or an empty vector otherwise.
+   */
+  const array &array_items() const;
+  /**
+   * Return the enclosed std::map if this is an object, or an empty map otherwise.
+   */
+  const object &object_items() const;
 
 
-private:
+  /**
+   * Return a reference to arr[i] if this is an array, UNDEFINED JSTP otherwise.
+   */
+  const JSRS &operator[](size_t i) const;
 
-    std::shared_ptr<JS_value> value;
+  /*
+   * Return a reference to obj[key] if this is an object, UNDEFINED JSTP otherwise.
+   */
+  const JSRS &operator[](const string &key) const;
 
-    /**
-     * Inner class for storing values
-     * Behaviour of methods is similar to JSRS one`s
-     */
-    class JS_value {
-        friend class JSRS;
-    protected:
-        virtual Type type() const = 0;
+  /**
+   * Serializator
+   */
+  string dump() const;
 
-        virtual bool equals(const JS_value * other) const = 0;
-        virtual bool less(const JS_value * other) const = 0;
+  /*
+   * Parser of a Record Serialization
+   */
+  static JSRS parse(const string &in, string &err);
 
-        virtual void dump(string& out) const = 0;
-        virtual bool bool_value() const;
-        virtual double number_value() const;
-        virtual const string& string_value() const;
-        virtual const array& array_items() const;
-        virtual const object &object_items() const;
+  bool operator==(const JSRS &rhs) const;
+  bool operator<(const JSRS &rhs) const;
+  bool operator!=(const JSRS &rhs) const;
+  bool operator<=(const JSRS &rhs) const;
+  bool operator>(const JSRS &rhs) const;
+  bool operator>=(const JSRS &rhs) const;
 
-        virtual const JSRS& operator[](size_t i) const;
-        virtual const JSRS& operator[](const std::string &key) const;
 
-        virtual ~JS_value() {}
-    };
+ private:
+
+  std::shared_ptr<JS_value> value;
+
+  /**
+   * Inner class for storing values
+   * Behaviour of methods is similar to JSRS one`s
+   */
+  class JS_value {
+    friend class JSRS;
+   protected:
+    virtual Type type() const = 0;
+
+    virtual bool equals(const JS_value *other) const = 0;
+    virtual bool less(const JS_value *other) const = 0;
+
+    virtual void dump(string &out) const = 0;
+    virtual bool bool_value() const;
+    virtual double number_value() const;
+    virtual const string &string_value() const;
+    virtual const array &array_items() const;
+    virtual const object &object_items() const;
+
+    virtual const JSRS &operator[](size_t i) const;
+    virtual const JSRS &operator[](const std::string &key) const;
+
+    virtual ~JS_value() { }
+  };
 };
 
 
-#endif //JSTP_CPP_JSTPPARSER_H
+#endif //JSTP_CPP_JSRS_H
