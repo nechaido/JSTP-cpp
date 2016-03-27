@@ -27,6 +27,41 @@ SOFTWARE.
 
 namespace jstp {
 
+// JSRS implementation
+
+JSRS::JSRS() {
+  value = std::make_shared<JS_undefined>();
+}
+
+JSRS::JSRS(std::nullptr_t) {
+  value = std::make_shared<JS_null>();
+}
+
+JSRS::JSRS(double val) {
+  value = std::make_shared<JS_number>(val);
+}
+
+JSRS::JSRS(bool val) {
+  value = std::make_shared<JS_boolean>(val);
+}
+
+JSRS::JSRS(const string &val) {
+  value = std::make_shared<JS_string>(val);
+}
+
+JSRS::JSRS(const char *value) {
+  this->value = std::make_shared<JS_string>(value);
+}
+
+JSRS::JSRS(const array &values) {
+  value = std::make_shared<JS_array>(values);
+}
+
+JSRS::JSRS(const object &values) {
+  value = std::make_shared<JS_object>(values);
+}
+// end of JSRS implementation
+
 // JS_value implementation
 
 bool JSRS::JS_value::bool_value() const { return false; }
@@ -85,6 +120,8 @@ bool JSRS::JS_boolean::bool_value() const { return value; }
 // JS_string implementation
 
 JSRS::JS_string::JS_string(const string &value) : value(value) { }
+
+JSRS::JS_string::JS_string(const char *value) : value(value) { }
 
 Type JSRS::JS_string::type() const { return JSRS::Type::STRING; }
 

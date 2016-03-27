@@ -186,6 +186,7 @@ class JSRS {
   class JS_string : public JS_value {
    public:
     JS_string(const string &value);
+    JS_string(const char *value);
 
     Type type() const;
 
