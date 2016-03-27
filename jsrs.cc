@@ -186,6 +186,36 @@ const object& JSRS::JS_object::object_items() const { return values; }
 
 const JSRS& JSRS::JS_object::operator[](const std::string &key) const { return values[key]; }
 // end of JS_object implementation
+
+// JS_undefined implementation
+
+Type JSRS::JS_undefined::type() const { return JSRS::Type::UNDEFINED; }
+
+bool JSRS::JS_undefined::equals(const JS_value *other) const {
+  return other->type() == this->type();
+}
+
+bool JSRS::JS_undefined::less(const JS_value *other) const {
+  return false;
+}
+
+void JSRS::JS_undefined::dump(string &out) const { out = "undefined"; }
+// end of JS_undefined implementation
+
+// JS_null implementation
+
+Type JSRS::JS_null::type() const { return JSRS::Type::NUL; }
+
+bool JSRS::JS_null::equals(const JS_value *other) const {
+  return other->type() == this->type();
+}
+
+bool JSRS::JS_null::less(const JS_value *other) const {
+  return false;
+}
+
+void JSRS::JS_null::dump(string &out) const { out = "null"; }
+// end of JS_undefined implementation
 }
 
 
