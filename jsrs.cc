@@ -64,6 +64,40 @@ JSRS::JSRS(const object &values) {
 Type JSRS::type() const {
   return value->type();
 }
+
+bool JSRS::bool_value() const {
+  return value->bool_value();
+}
+
+double JSRS::number_value() const {
+  return value->number_value();
+}
+
+const string& JSRS::string_value() const {
+  return value->string_value();
+}
+
+const array& JSRS::array_items() const {
+  return value->array_items();
+}
+
+const object& JSRS::object_items() const {
+  return value->object_items();
+}
+
+const JSRS& JSRS::operator[](size_t i) const {
+  return value->operator[](i);
+}
+
+const JSRS& JSRS::operator[](const string &key) const {
+  return value->operator[](key);
+}
+
+string JSRS::dump() const {
+  string result;
+  value->dump(result);
+  return result;
+}
 // end of JSRS implementation
 
 // JS_value implementation
