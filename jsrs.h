@@ -124,8 +124,6 @@ class JSRS {
 
  private:
 
-  std::shared_ptr<JS_value> value;
-
   /**
    * Inner class for storing values
    * Behaviour of methods is similar to JSRS one`s
@@ -150,6 +148,8 @@ class JSRS {
 
     virtual ~JS_value() { }
   };
+
+  std::shared_ptr<JS_value> value;
 
   class JS_number : public JS_value {
    public:

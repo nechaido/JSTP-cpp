@@ -23,6 +23,7 @@ SOFTWARE.
  */
 
 #include "jsrs.h"
+
 #include <sstream>
 
 namespace jstp {
@@ -61,7 +62,7 @@ JSRS::JSRS(const object &values) {
   value = std::make_shared<JS_object>(values);
 }
 
-Type JSRS::type() const {
+JSRS::Type JSRS::type() const {
   return value->type();
 }
 
@@ -73,15 +74,15 @@ double JSRS::number_value() const {
   return value->number_value();
 }
 
-const string& JSRS::string_value() const {
+const JSRS::string& JSRS::string_value() const {
   return value->string_value();
 }
 
-const array& JSRS::array_items() const {
+const JSRS::array& JSRS::array_items() const {
   return value->array_items();
 }
 
-const object& JSRS::object_items() const {
+const JSRS::object& JSRS::object_items() const {
   return value->object_items();
 }
 
@@ -93,7 +94,7 @@ const JSRS& JSRS::operator[](const string &key) const {
   return value->operator[](key);
 }
 
-string JSRS::dump() const {
+JSRS::string JSRS::dump() const {
   string result;
   value->dump(result);
   return result;
@@ -122,6 +123,11 @@ bool JSRS::operator>(const JSRS &rhs) const {
 bool JSRS::operator>=(const JSRS &rhs) const {
   return this->value->equals(rhs.value.get()) || !this->value->less(rhs.value.get());
 }
+
+JSRS JSRS::parse(const string &in, string &err) {
+  return JSRS();
+}
+
 // end of JSRS implementation
 
 // JS_value implementation
@@ -130,11 +136,11 @@ bool JSRS::JS_value::bool_value() const { return false; }
 
 double JSRS::JS_value::number_value() const { return 0.0; }
 
-const string &JSRS::JS_value::string_value() const { return string(""); }
+const JSRS::string &JSRS::JS_value::string_value() const { return ""; }
 
-const array &JSRS::JS_value::array_items() const { return array(); }
+const JSRS::array &JSRS::JS_value::array_items() const { return array(); }
 
-const object &JSRS::JS_value::object_items() const { return object(); }
+const JSRS::object &JSRS::JS_value::object_items() const { return object(); }
 
 const JSRS &JSRS::JS_value::operator[](size_t i) const { return JSRS(); }
 
@@ -145,7 +151,7 @@ const JSRS &JSRS::JS_value::operator[](const std::string &key) const { return JS
 
 JSRS::JS_number::JS_number(double value) : value(value) { }
 
-Type JSRS::JS_number::type() const { return JSRS::Type::NUMBER; }
+JSRS::Type JSRS::JS_number::type() const { return JSRS::Type::NUMBER; }
 
 bool JSRS::JS_number::equals(const JS_value *other) const {
   return other->type() == this->type() && this->number_value() == other->number_value();
@@ -155,7 +161,11 @@ bool JSRS::JS_number::less(const JS_value *other) const {
   return other->type() == this->type() && this->number_value() < other->number_value();
 }
 
-void JSRS::JS_number::dump(string &out) const { out = std::to_string(this->value); }
+void JSRS::JS_number::dump(string &out) const {
+  std::ostringstream result;
+  result << value;
+  out = result.str();
+}
 
 double JSRS::JS_number::number_value() const { return value; }
 // end of JS_number implementation
@@ -164,7 +174,7 @@ double JSRS::JS_number::number_value() const { return value; }
 
 JSRS::JS_boolean::JS_boolean(bool value) : value(value) { }
 
-Type JSRS::JS_boolean::type() const { return JSRS::Type::BOOL; }
+JSRS::Type JSRS::JS_boolean::type() const { return JSRS::Type::BOOL; }
 
 bool JSRS::JS_boolean::equals(const JS_value *other) const {
   return other->type() == this->type() && this->bool_value() == other->bool_value();
@@ -185,7 +195,7 @@ JSRS::JS_string::JS_string(const string &value) : value(value) { }
 
 JSRS::JS_string::JS_string(const char *value) : value(value) { }
 
-Type JSRS::JS_string::type() const { return JSRS::Type::STRING; }
+JSRS::Type JSRS::JS_string::type() const { return JSRS::Type::STRING; }
 
 bool JSRS::JS_string::equals(const JS_value *other) const {
   return other->type() == this->type() && this->string_value().compare(other->string_value()) == 0;
@@ -195,16 +205,20 @@ bool JSRS::JS_string::less(const JS_value *other) const {
   return other->type() == this->type() && this->string_value().compare(other->string_value()) < 0;
 }
 
-void JSRS::JS_string::dump(string &out) const { out = value; }
+void JSRS::JS_string::dump(string &out) const {
+  std::ostringstream result;
+  result << "\"" << value << "\"";
+  out = result.str();
+}
 
-const string &JSRS::JS_string::string_value() const { return value; }
+const JSRS::string &JSRS::JS_string::string_value() const { return value; }
 // end of JS_string implementation
 
 // JS_array implementation
 
 JSRS::JS_array::JS_array(const array &values) : values(values) { }
 
-Type JSRS::JS_array::type() const { return JSRS::Type::ARRAY; }
+JSRS::Type JSRS::JS_array::type() const { return JSRS::Type::ARRAY; }
 
 bool JSRS::JS_array::equals(const JS_value *other) const {
   bool result = other->type() == this->type() && this->array_items().size() == other->array_items().size();
@@ -237,7 +251,7 @@ void JSRS::JS_array::dump(string &out) const {
   out = result.str();
 }
 
-const array &JSRS::JS_array::array_items() const { return values; }
+const JSRS::array &JSRS::JS_array::array_items() const { return values; }
 
 const JSRS &JSRS::JS_array::operator[](size_t i) const { return values[i]; }
 // end of JS_array implementation
@@ -246,7 +260,7 @@ const JSRS &JSRS::JS_array::operator[](size_t i) const { return values[i]; }
 
 JSRS::JS_object::JS_object(const object &value) : values(value) { }
 
-Type JSRS::JS_object::type() const { return JSRS::Type::OBJECT; }
+JSRS::Type JSRS::JS_object::type() const { return JSRS::Type::OBJECT; }
 
 bool JSRS::JS_object::equals(const JS_value *other) const {
   bool result = other->type() == this->type() && this->object_items().size() == other->object_items().size();
@@ -281,14 +295,14 @@ void JSRS::JS_object::dump(string &out) const {
   out = result.str();
 }
 
-const object &JSRS::JS_object::object_items() const { return values; }
+const JSRS::object &JSRS::JS_object::object_items() const { return values; }
 
-const JSRS &JSRS::JS_object::operator[](const std::string &key) const { return values[key]; }
+const JSRS &JSRS::JS_object::operator[](const std::string &key) const { return values.at(key); }
 // end of JS_object implementation
 
 // JS_undefined implementation
 
-Type JSRS::JS_undefined::type() const { return JSRS::Type::UNDEFINED; }
+JSRS::Type JSRS::JS_undefined::type() const { return JSRS::Type::UNDEFINED; }
 
 bool JSRS::JS_undefined::equals(const JS_value *other) const {
   return other->type() == this->type();
@@ -303,7 +317,7 @@ void JSRS::JS_undefined::dump(string &out) const { out = "undefined"; }
 
 // JS_null implementation
 
-Type JSRS::JS_null::type() const { return JSRS::Type::NUL; }
+JSRS::Type JSRS::JS_null::type() const { return JSRS::Type::NUL; }
 
 bool JSRS::JS_null::equals(const JS_value *other) const {
   return other->type() == this->type();
