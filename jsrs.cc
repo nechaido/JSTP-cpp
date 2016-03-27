@@ -98,6 +98,30 @@ string JSRS::dump() const {
   value->dump(result);
   return result;
 }
+
+bool JSRS::operator==(const JSRS &rhs) const {
+  return this->value->equals(rhs.value.get());
+}
+
+bool JSRS::operator<(const JSRS &rhs) const {
+  return this->value->less(rhs.value.get());
+}
+
+bool JSRS::operator!=(const JSRS &rhs) const {
+  return !this->value->equals(rhs.value.get());
+}
+
+bool JSRS::operator<=(const JSRS &rhs) const {
+  return this->value->equals(rhs.value.get()) || this->value->less(rhs.value.get());
+}
+
+bool JSRS::operator>(const JSRS &rhs) const {
+  return !this->value->equals(rhs.value.get()) && !this->value->less(rhs.value.get());
+}
+
+bool JSRS::operator>=(const JSRS &rhs) const {
+  return this->value->equals(rhs.value.get()) || !this->value->less(rhs.value.get());
+}
 // end of JSRS implementation
 
 // JS_value implementation
