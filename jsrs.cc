@@ -31,7 +31,7 @@ namespace jstp {
 
 bool JSRS::JS_value::bool_value() const { return false; }
 
-double JSRS::JS_value::number_value() const { return 0; }
+double JSRS::JS_value::number_value() const { return 0.0; }
 
 const string &JSRS::JS_value::string_value() const { return string(""); }
 
@@ -60,7 +60,7 @@ bool JSRS::JS_number::less(const JS_value *other) const {
 
 void JSRS::JS_number::dump(string &out) const { out = std::to_string(this->value); }
 
-double JSRS::JS_number::number_value() const { return this->value; }
+double JSRS::JS_number::number_value() const { return value; }
 // end of JS_number implementation
 
 // JS_boolean implementation
@@ -121,18 +121,18 @@ bool JSRS::JS_array::equals(const JS_value *other) const {
 }
 
 bool JSRS::JS_array::less(const JS_value *other) const {
-  return false; // TODO: Implement less for arrays
+  return false; // TODO(belochub): Implement less for arrays
   //return other->type() == this->type();
 }
 
 void JSRS::JS_array::dump(string &out) const {
   std::ostringstream result;
   result << '[';
-  for (size_t i = 0; i < this->values.size(); i++) {
-    if (i != 0) {
+  for (auto i = values.begin(); i != values.end(); ++i) {
+    if (i != values.begin()) {
       result << ',';
     }
-    result << this->values[i].dump();
+    result <<i->dump();
   }
   result << ']';
   out = result.str();
@@ -142,6 +142,50 @@ const array &JSRS::JS_array::array_items() const { return values; }
 
 const JSRS &JSRS::JS_array::operator[](size_t i) const { return values[i]; }
 // end of JS_array implementation
+
+// JS_object implementation
+
+JSRS::JS_object::JS_object(const object &value) : values(value) { }
+
+Type JSRS::JS_object::type() const { return JSRS::Type::OBJECT; }
+
+bool JSRS::JS_object::equals(const JS_value *other) const {
+  bool result = other->type() == this->type() && this->object_items().size() == other->object_items().size();
+  if (result) {
+    auto i = this->object_items().begin();
+    auto j = other->object_items().begin();
+    for ( ; i != this->object_items().end(); ++i, ++j) {
+      if (i->first != j->first || i->second != j->second) {
+        result = false;
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+bool JSRS::JS_object::less(const JS_value *other) const {
+  return false; // TODO(belochub): Implement less for objects
+  //return other->type() == this->type();
+}
+
+void JSRS::JS_object::dump(string &out) const {
+  std::ostringstream result;
+  result << '{';
+  for (auto i = values.begin(); i != values.end(); ++i) {
+    if (i != values.begin()) {
+      result << ',';
+    }
+    result << i->first << ':' << i->second.dump();
+  }
+  result << '}';
+  out = result.str();
+}
+
+const object& JSRS::JS_object::object_items() const { return values; }
+
+const JSRS& JSRS::JS_object::operator[](const std::string &key) const { return values[key]; }
+// end of JS_object implementation
 }
 
 
