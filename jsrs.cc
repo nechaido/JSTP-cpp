@@ -60,6 +60,10 @@ JSRS::JSRS(const array &values) {
 JSRS::JSRS(const object &values) {
   value = std::make_shared<JS_object>(values);
 }
+
+Type JSRS::type() const {
+  return value->type();
+}
 // end of JSRS implementation
 
 // JS_value implementation
@@ -169,7 +173,7 @@ void JSRS::JS_array::dump(string &out) const {
     if (i != values.begin()) {
       result << ',';
     }
-    result <<i->dump();
+    result << i->dump();
   }
   result << ']';
   out = result.str();
@@ -191,7 +195,7 @@ bool JSRS::JS_object::equals(const JS_value *other) const {
   if (result) {
     auto i = this->object_items().begin();
     auto j = other->object_items().begin();
-    for ( ; i != this->object_items().end(); ++i, ++j) {
+    for (; i != this->object_items().end(); ++i, ++j) {
       if (i->first != j->first || i->second != j->second) {
         result = false;
         break;
@@ -219,9 +223,9 @@ void JSRS::JS_object::dump(string &out) const {
   out = result.str();
 }
 
-const object& JSRS::JS_object::object_items() const { return values; }
+const object &JSRS::JS_object::object_items() const { return values; }
 
-const JSRS& JSRS::JS_object::operator[](const std::string &key) const { return values[key]; }
+const JSRS &JSRS::JS_object::operator[](const std::string &key) const { return values[key]; }
 // end of JS_object implementation
 
 // JS_undefined implementation
