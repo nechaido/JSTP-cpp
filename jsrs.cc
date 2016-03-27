@@ -25,6 +25,7 @@ SOFTWARE.
 #include "jsrs.h"
 
 #include <sstream>
+#include <iterator>
 
 namespace jstp {
 
@@ -74,23 +75,23 @@ double JSRS::number_value() const {
   return value->number_value();
 }
 
-const JSRS::string& JSRS::string_value() const {
+const JSRS::string &JSRS::string_value() const {
   return value->string_value();
 }
 
-const JSRS::array& JSRS::array_items() const {
+const JSRS::array &JSRS::array_items() const {
   return value->array_items();
 }
 
-const JSRS::object& JSRS::object_items() const {
+const JSRS::object &JSRS::object_items() const {
   return value->object_items();
 }
 
-const JSRS& JSRS::operator[](size_t i) const {
+const JSRS &JSRS::operator[](size_t i) const {
   return value->operator[](i);
 }
 
-const JSRS& JSRS::operator[](const string &key) const {
+const JSRS &JSRS::operator[](const string &key) const {
   return value->operator[](key);
 }
 
@@ -124,8 +125,267 @@ bool JSRS::operator>=(const JSRS &rhs) const {
   return this->value->equals(rhs.value.get()) || !this->value->less(rhs.value.get());
 }
 
+const std::string &delete_whitespaces(const std::string &str) {
+  std::ostringstream writer;
+  bool string_mode = false;
+  for (auto i = str.begin(); i != str.end(); ++i) {
+    if ((isspace(*i) && string_mode) || !isspace(*i)) {
+      writer << *i;
+    }
+    if (*i == '\'' || *i == '\"') {
+      string_mode = !string_mode;
+    }
+  }
+  return *new std::string(writer.str());
+}
+
+std::string::iterator get_end(const std::string::iterator &begin, const std::string::iterator &end, JSRS::Type &type) {
+  std::string::iterator result = begin;
+  auto i = begin;
+  switch (*(i++)) {
+    case ',':
+      type = JSRS::Type::UNDEFINED;
+      return begin + 1;
+    case '{':
+      type = JSRS::Type::OBJECT;
+      result++;
+      break;
+    case '[':
+      type = JSRS::Type::ARRAY;
+      result++;
+      break;
+    case '\"':
+    case '\'':
+      type = JSRS::Type::STRING;
+      result++;
+      break;
+    case 't':
+    case 'f':
+      type = JSRS::Type::BOOL;
+      result++;
+      break;
+    case 'n':
+      if (begin + 4 < end) {
+        result += 5;
+      }
+    case 'u':
+      if (begin + 9 < end) {
+        result += 10;
+      }
+    default:
+      if ((*begin >= '0' && *begin <= '9') || *begin == '.') {
+        type = JSRS::Type::NUMBER;
+        result++;
+      } else {
+        return begin;
+      }
+  }
+  int p = 1;
+  bool is_found = false;
+  for (; i != end && result != begin && !is_found; ++i) {
+    switch (type) {
+      case JSRS::Type::OBJECT:
+        if (*i == '{') {
+          p++;
+        }
+        if (*i == '}') {
+          p--;
+          if (p == 0) {
+            result = i + 1;
+            is_found = true;
+          }
+        }
+        break;
+      case JSRS::Type::ARRAY:
+        if (*i == '[') {
+          p++;
+        }
+        if (*i == ']') {
+          p--;
+          if (p == 0) {
+            result = i + 1;
+            is_found = true;
+          }
+        }
+        break;
+      case JSRS::Type::STRING:
+        if (*i == '\"' || *i == '\'') {
+          result = i + 1;
+          is_found = true;
+        }
+        break;
+      case JSRS::Type::NUMBER:
+        if (!(*i >= '0' && *i <= '9') && *i != '.') {
+          result = i;
+          is_found = true;
+        }
+        break;
+      case JSRS::Type::BOOL:
+        if (*i == 'e') {
+          result = i + 1;
+          is_found = true;
+        }
+        break;
+    }
+  }
+
+  return result;
+}
+
+const JSRS &parse_bool(const std::string::iterator &begin, const std::string::iterator &end) {
+  std::ostringstream writer;
+  std::copy(begin, end, std::ostream_iterator<char>(writer, ""));
+  std::string result = writer.str();
+  if (result == "true") {
+    return *new JSRS(true);
+  } else if (result == "false") {
+    return *new JSRS(false);
+  } else {
+    return *new JSRS();
+  }
+}
+
+const JSRS &parse_number(const std::string::iterator &begin, const std::string::iterator &end) {
+  std::ostringstream writer;
+  std::copy(begin, end, std::ostream_iterator<char>(writer, ""));
+  std::string result = writer.str();
+  return *new JSRS(std::stod(result));
+}
+
+const JSRS &parse_string(const std::string::iterator &begin, const std::string::iterator &end) {
+  std::ostringstream writer;
+  std::copy(begin + 1, end - 1, std::ostream_iterator<char>(writer, ""));
+  return *new JSRS(writer.str());
+}
+const JSRS &parse_array(const std::string::iterator &begin, const std::string::iterator &end);
+
+const JSRS &parse_object(const std::string::iterator &begin, const std::string::iterator &end) {
+  int p = 0;
+  bool key_mode = true;
+  std::string current_key;
+  JSRS::Type current_type;
+  std::map<std::string, JSRS> object;
+  std::ostringstream writer;
+  for (auto i = begin + 1; i != end; ++i) {
+    if (key_mode) {
+      if (*i != ':') {
+        writer << *i;
+      } else {
+        key_mode = false;
+        current_key = writer.str();
+        writer.str("");
+      }
+    } else {
+      auto e = get_end(i, end, current_type);
+      if (e != i) {
+        switch (current_type) {
+          case JSRS::Type::OBJECT:
+            object[current_key] = parse_object(i, e);
+            break;
+          case JSRS::Type::ARRAY:
+            object[current_key] = parse_array(i, e);
+            break;
+          case JSRS::Type::STRING:
+            object[current_key] = parse_string(i, e);
+            break;
+          case JSRS::Type::NUMBER:
+            object[current_key] = parse_number(i, e);
+            break;
+          case JSRS::Type::BOOL:
+            object[current_key] = parse_bool(i, e);
+            break;
+          case JSRS::Type::UNDEFINED:
+            object[current_key] = JSRS();
+            break;
+          case JSRS::Type::NUL:
+            object[current_key] = JSRS(nullptr);
+            break;
+        }
+        i = e;
+        current_key = "";
+        key_mode = true;
+      } else {
+        return *new JSRS();
+      }
+    }
+  }
+  JSRS *result = new JSRS(object);
+  return *result;
+}
+
+const JSRS &parse_array(const std::string::iterator &begin, const std::string::iterator &end) {
+  JSRS::Type current_type;
+  std::vector<JSRS> array;
+
+  for (auto i = begin + 1; i != end; ++i) {
+
+    auto e = get_end(i, end, current_type);
+    if (e != i) {
+      switch (current_type) {
+        case JSRS::Type::OBJECT:
+          array.push_back(parse_object(i, e));
+          break;
+        case JSRS::Type::ARRAY:
+          array.push_back(parse_array(i, e));
+          break;
+        case JSRS::Type::STRING:
+          array.push_back(parse_string(i, e));
+          break;
+        case JSRS::Type::NUMBER:
+          array.push_back(parse_number(i, e));
+          break;
+        case JSRS::Type::BOOL:
+          array.push_back(parse_bool(i, e));
+          break;
+        case JSRS::Type::UNDEFINED:
+          array.push_back(JSRS());
+          break;
+        case JSRS::Type::NUL:
+          array.push_back(JSRS(nullptr));
+          break;
+      }
+      i = e;
+    } else {
+      return *new JSRS();
+    }
+  }
+
+  JSRS *result = new JSRS(array);
+  return *result;
+}
+
 JSRS JSRS::parse(const string &in, string &err) {
-  return JSRS();
+  string to_parse = delete_whitespaces(in);
+  Type type;
+  auto end = get_end(to_parse.begin(), to_parse.end(), type);
+  if (end != to_parse.end()) {
+    return JSRS();
+  }
+  JSRS result;
+  switch (type) {
+    case ARRAY:
+      result = JSRS(parse_array(to_parse.begin(), to_parse.end()));
+      break;
+    case BOOL:
+      result = JSRS(parse_bool(to_parse.begin(), to_parse.end()));
+      break;
+    case OBJECT:
+      result = JSRS(parse_object(to_parse.begin(), to_parse.end()));
+      break;
+    case NUMBER:
+      result = JSRS(parse_number(to_parse.begin(), to_parse.end()));
+      break;
+    case STRING:
+      result = JSRS(parse_string(to_parse.begin(), to_parse.end()));
+      break;
+    case UNDEFINED:
+      result = JSRS();
+      break;
+    case NUL:
+      result = JSRS(nullptr);
+      break;
+  }
+  return result;
 }
 
 // end of JSRS implementation
@@ -136,15 +396,15 @@ bool JSRS::JS_value::bool_value() const { return false; }
 
 double JSRS::JS_value::number_value() const { return 0.0; }
 
-const JSRS::string &JSRS::JS_value::string_value() const { return ""; }
+const JSRS::string &JSRS::JS_value::string_value() const { return *new string(""); }
 
-const JSRS::array &JSRS::JS_value::array_items() const { return array(); }
+const JSRS::array &JSRS::JS_value::array_items() const { return *new array(); }
 
-const JSRS::object &JSRS::JS_value::object_items() const { return object(); }
+const JSRS::object &JSRS::JS_value::object_items() const { return *new object(); }
 
-const JSRS &JSRS::JS_value::operator[](size_t i) const { return JSRS(); }
+const JSRS &JSRS::JS_value::operator[](size_t i) const { return *new JSRS(); }
 
-const JSRS &JSRS::JS_value::operator[](const std::string &key) const { return JSRS(); }
+const JSRS &JSRS::JS_value::operator[](const std::string &key) const { return *new JSRS(); }
 // end of JS_value implementation
 
 // JS_number implementation
