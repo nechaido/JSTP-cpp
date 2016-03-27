@@ -23,6 +23,7 @@ SOFTWARE.
  */
 
 #include "jsrs.h"
+#include <sstream>
 
 namespace jstp {
 
@@ -99,6 +100,48 @@ void JSRS::JS_string::dump(string &out) const { out = value; }
 
 const string &JSRS::JS_string::string_value() const { return value; }
 // end of JS_string implementation
+
+// JS_array implementation
+
+JSRS::JS_array::JS_array(const array &values) : values(values) { }
+
+Type JSRS::JS_array::type() const { return JSRS::Type::ARRAY; }
+
+bool JSRS::JS_array::equals(const JS_value *other) const {
+  bool result = other->type() == this->type() && this->array_items().size() == other->array_items().size();
+  if (result) {
+    for (size_t i = 0; i < this->array_items().size(); i++) {
+      if (this->array_items()[i] != other->array_items()[i]) {
+        result = false;
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+bool JSRS::JS_array::less(const JS_value *other) const {
+  return false; // TODO: Implement less for arrays
+  //return other->type() == this->type();
+}
+
+void JSRS::JS_array::dump(string &out) const {
+  std::ostringstream result;
+  result << '[';
+  for (size_t i = 0; i < this->values.size(); i++) {
+    if (i != 0) {
+      result << ',';
+    }
+    result << this->values[i].dump();
+  }
+  result << ']';
+  out = result.str();
+}
+
+const array &JSRS::JS_array::array_items() const { return values; }
+
+const JSRS &JSRS::JS_array::operator[](size_t i) const { return values[i]; }
+// end of JS_array implementation
 }
 
 
