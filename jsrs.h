@@ -131,44 +131,105 @@ class JSRS {
     virtual ~JS_value() { }
   };
 
-  class JS_number : JS_value {
+  class JS_number : public JS_value {
    public:
     JS_number(double value);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    double number_value() const;
    private:
     double value;
   };
 
-  class JS_boolean : JS_value {
+  class JS_boolean : public JS_value {
    public:
     JS_boolean(bool value);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    bool bool_value() const;
    private:
     bool value;
   };
 
-  class JS_string : JS_value {
+  class JS_string : public JS_value {
    public:
     JS_string(const string &value);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    const string &string_value() const;
    private:
     string value;
   };
 
-  class JS_array : JS_value {
+  class JS_array : public JS_value {
    public:
     JS_array(const array &values);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    const array &array_items() const;
+    const JSRS &operator[](size_t i) const;
    private:
     array values;
   };
 
-  class JS_object : JS_value {
+  class JS_object : public JS_value {
    public:
     JS_object(const object &value);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    const object &object_items() const;
+    const JSRS &operator[](const std::string &key) const;
    private:
     object values;
   };
 
-  class JS_undefined : JS_value { };
+  class JS_undefined : public JS_value {
+    Type type() const;
 
-  class JS_null : JS_value { };
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+  };
+
+  class JS_null : public JS_value {
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+  };
 
 };
 
