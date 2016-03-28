@@ -140,49 +140,52 @@ const std::string &delete_whitespaces(const std::string &str) {
 }
 
 std::string::iterator get_end(const std::string::iterator &begin, const std::string::iterator &end, JSRS::Type &type) {
-  std::string::iterator result = begin;
+  std::string::iterator result;
   auto i = begin;
+  bool is_found = false;
   switch (*(i++)) {
     case ',':
       type = JSRS::Type::UNDEFINED;
       return begin + 1;
     case '{':
       type = JSRS::Type::OBJECT;
-      result++;
       break;
     case '[':
       type = JSRS::Type::ARRAY;
-      result++;
       break;
     case '\"':
     case '\'':
       type = JSRS::Type::STRING;
-      result++;
       break;
     case 't':
     case 'f':
       type = JSRS::Type::BOOL;
-      result++;
       break;
     case 'n':
       if (begin + 4 < end) {
-        result += 5;
+        type = JSRS::Type::NUL;
+        result = begin + 4;
+        is_found = true;
       }
+      break;
     case 'u':
       if (begin + 9 < end) {
-        result += 10;
+        type = JSRS::Type::UNDEFINED;
+        result = begin + 9;
+        is_found = true;
       }
+      break;
     default:
       if ((*begin >= '0' && *begin <= '9') || *begin == '.') {
         type = JSRS::Type::NUMBER;
-        result++;
       } else {
         return begin;
       }
   }
+
   int p = 1;
-  bool is_found = false;
-  for (; i != end && result != begin && !is_found; ++i) {
+
+  for (; i != end && !is_found; ++i) {
     switch (type) {
       case JSRS::Type::OBJECT:
         if (*i == '{') {
