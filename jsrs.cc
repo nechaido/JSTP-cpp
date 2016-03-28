@@ -125,16 +125,36 @@ bool JSRS::operator>=(const JSRS &rhs) const {
   return this->value->equals(rhs.value.get()) || !this->value->less(rhs.value.get());
 }
 
-const std::string &delete_whitespaces(const std::string &str) {
+const std::string &prepare_string(const std::string &str) {
   std::ostringstream writer;
   bool string_mode = false;
+  enum COMMENT_MODE { kDisabled = 0, kOneline, kMultiline } comment_mode = kDisabled;
   for (auto i = str.begin(); i != str.end(); ++i) {
-    if ((isspace(*i) && string_mode) || !isspace(*i)) {
-      writer << *i;
-    }
     if (*i == '\'' || *i == '\"') {
       string_mode = !string_mode;
     }
+    if (!string_mode) {
+      if (!comment_mode && *i == '/') {
+        switch (*(i + 1)) {
+          case '/':
+            comment_mode = kOneline;
+            break;
+          case '*':
+            comment_mode = kMultiline;
+            break;
+        }
+      }
+      if (!comment_mode && !isspace(*i)) {
+        writer << *i;
+      }
+      if ((comment_mode == 1 && (*i == '\n' || *i == '\r')) ||
+          (comment_mode == 2 && *(i - 1) == '*' && *i == '/')) {
+        comment_mode = kDisabled;
+      }
+    } else {
+      writer << *i;
+    }
+
   }
   return *new std::string(writer.str());
 }
@@ -358,7 +378,7 @@ const JSRS &parse_array(const std::string::iterator &begin, const std::string::i
 }
 
 JSRS JSRS::parse(const string &in, string &err) {
-  string to_parse = delete_whitespaces(in);
+  string to_parse = prepare_string(in);
   Type type;
   auto end = get_end(to_parse.begin(), to_parse.end(), type);
   if (end != to_parse.end()) {
