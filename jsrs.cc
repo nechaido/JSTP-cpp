@@ -171,6 +171,7 @@ std::string::iterator get_end(const std::string::iterator &begin, const std::str
   bool is_found = false;
   switch (*(i++)) {
     case ',':
+    case ']':
       type = JSRS::Type::UNDEFINED;
       return begin + 1;
     case '{':
@@ -192,13 +193,17 @@ std::string::iterator get_end(const std::string::iterator &begin, const std::str
       is_found = true;
       if (begin + 4 < end && get_string(begin, begin + 4) == "null") {
         result = begin + 4;
+      } else {
+        result = begin;
       }
       break;
     case 'u':
       type = JSRS::Type::UNDEFINED;
+      is_found = true;
       if (begin + 9 < end && get_string(begin, begin + 9) == "undefined") {
         result = begin + 9;
-        is_found = true;
+      } else {
+        result = begin;
       }
       break;
     default:
@@ -321,6 +326,8 @@ const JSRS &parse_object(const std::string::iterator &begin, const std::string::
         writer.str("");
       } else if (isalnum(*i) || *i == '_') {
         writer << *i;
+      } else if (*i == '}') {
+        return *new JSRS(object); // In case of empty object
       } else {
         if (!err) {
           err = new std::string("Invalid format in object: key is invalid");
@@ -381,7 +388,11 @@ const JSRS &parse_array(const std::string::iterator &begin, const std::string::i
   for (auto i = begin + 1; i != end && !err; ++i) {
 
     auto e = get_end(i, end, current_type);
+
     if (e != i) {
+      if (*(e - 2) == '[' && *(e - 1) == ']') { // In case of empty array
+        return *new JSRS(array);
+      }
       switch (current_type) {
         case JSRS::Type::OBJECT:
           array.push_back(parse_object(i, e, err));
@@ -400,6 +411,9 @@ const JSRS &parse_array(const std::string::iterator &begin, const std::string::i
           break;
         case JSRS::Type::UNDEFINED:
           array.push_back(JSRS());
+          if (e == i + 1) {
+            e--;
+          }
           break;
         case JSRS::Type::NUL:
           array.push_back(JSRS(nullptr));
