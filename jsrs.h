@@ -29,6 +29,7 @@ SOFTWARE.
 #include <vector>
 #include <map>
 #include <memory>
+#include <utility>
 
 namespace jstp {
 
@@ -37,6 +38,7 @@ class JSRS {
   typedef std::string string;
   typedef std::vector<JSRS> array;
   typedef std::map<std::string, JSRS> object;
+  typedef std::vector<const string*> object_keys;
 
  public:
 
@@ -56,6 +58,7 @@ class JSRS {
   JSRS(const array &values);       // ARRAY
 
   JSRS(const object &values);      // OBJECT
+  JSRS(const object &values, const object_keys &keys);      // ORDERED_OBJECT
 
 
 
@@ -92,7 +95,7 @@ class JSRS {
    * Return the enclosed std::map if this is an object, or an empty map otherwise.
    */
   const object &object_items() const;
-
+  const object_keys &get_object_keys() const;
 
   /**
    * Return a reference to arr[i] if this is an array, UNDEFINED JSTP otherwise.
@@ -142,6 +145,7 @@ class JSRS {
     virtual const string &string_value() const;
     virtual const array &array_items() const;
     virtual const object &object_items() const;
+    virtual const object_keys &get_object_keys() const;
 
     virtual const JSRS &operator[](size_t i) const;
     virtual const JSRS &operator[](const std::string &key) const;
@@ -220,6 +224,7 @@ class JSRS {
   class JS_object : public JS_value {
    public:
     JS_object(const object &value);
+    JS_object(const object &value, const object_keys &keys);
 
     Type type() const;
 
@@ -229,9 +234,11 @@ class JSRS {
     void dump(string &out) const;
 
     const object &object_items() const;
+    const object_keys &get_object_keys() const;
     const JSRS &operator[](const std::string &key) const;
    private:
     object values;
+    object_keys keys;
   };
 
   class JS_undefined : public JS_value {
