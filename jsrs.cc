@@ -60,7 +60,15 @@ JSRS::JSRS(const array &values) {
 }
 
 JSRS::JSRS(const object &values) {
-  value = std::make_shared<JS_object>(values);
+  object_keys keys;
+  for (auto i = values.begin(); i != values.end(); ++i) {
+    keys.push_back(&i->first);
+  }
+  value = std::make_shared<JS_object>(values, keys);
+}
+
+JSRS::JSRS(const object &values, const object_keys &keys) {
+  value = std::make_shared<JS_object>(values, keys);
 }
 
 JSRS::Type JSRS::type() const {
@@ -85,6 +93,10 @@ const JSRS::array &JSRS::array_items() const {
 
 const JSRS::object &JSRS::object_items() const {
   return value->object_items();
+}
+
+const JSRS::object_keys &JSRS::get_object_keys() const {
+  return value->get_object_keys();
 }
 
 const JSRS &JSRS::operator[](size_t i) const {
@@ -337,6 +349,7 @@ const JSRS *parse_object(const std::string::const_iterator &begin,
   std::string current_key;
   JSRS::Type current_type;
   std::map<std::string, JSRS> object;
+  std::vector<const std::string *> keys;
   std::ostringstream writer;
   for (auto i = begin + 1; i != end && !err; ++i) {
     if (key_mode) {
@@ -380,7 +393,8 @@ const JSRS *parse_object(const std::string::const_iterator &begin,
             t = new JSRS(nullptr);
             break;
         }
-        object[current_key] = JSRS(*t);
+        auto ins = object.insert(std::make_pair(current_key, JSRS(*t)));
+        keys.push_back(&ins.first->first);
         delete t;
         i = e;
         if (*i != ',' && *i != '}') {
@@ -401,7 +415,7 @@ const JSRS *parse_object(const std::string::const_iterator &begin,
     return new JSRS();
   }
 
-  return new JSRS(object);
+  return new JSRS(object, keys);
 }
 
 const JSRS *parse_array(const std::string::const_iterator &begin,
@@ -524,6 +538,8 @@ const JSRS::array &JSRS::JS_value::array_items() const { return *new array(); }
 
 const JSRS::object &JSRS::JS_value::object_items() const { return *new object(); }
 
+const JSRS::object_keys &JSRS::JS_value::get_object_keys() const { return *new object_keys(); }
+
 const JSRS &JSRS::JS_value::operator[](size_t i) const { return *new JSRS(); }
 
 const JSRS &JSRS::JS_value::operator[](const std::string &key) const { return *new JSRS(); }
@@ -644,6 +660,13 @@ const JSRS &JSRS::JS_array::operator[](size_t i) const { return values[i]; }
 
 JSRS::JS_object::JS_object(const object &value) : values(value) { }
 
+JSRS::JS_object::JS_object(const object &value, const object_keys &keys) {
+  for (auto i = keys.begin(); i != keys.end(); ++i) {
+    auto ins = values.insert(std::make_pair(**i, value.at(**i)));
+    this->keys.push_back(&ins.first->first);
+  }
+}
+
 JSRS::Type JSRS::JS_object::type() const { return JSRS::Type::OBJECT; }
 
 bool JSRS::JS_object::equals(const JS_value *other) const {
@@ -669,17 +692,19 @@ bool JSRS::JS_object::less(const JS_value *other) const {
 void JSRS::JS_object::dump(string &out) const {
   std::ostringstream result;
   result << '{';
-  for (auto i = values.begin(); i != values.end(); ++i) {
-    if (i != values.begin()) {
+  for (auto i = keys.begin(); i != keys.end(); ++i) {
+    if (i != keys.begin()) {
       result << ',';
     }
-    result << i->first << ':' << i->second.dump();
+    result << **i << ':' << values.at(**i).dump();
   }
   result << '}';
   out = result.str();
 }
 
 const JSRS::object &JSRS::JS_object::object_items() const { return values; }
+
+const JSRS::object_keys &JSRS::JS_object::get_object_keys() const { return keys; }
 
 const JSRS &JSRS::JS_object::operator[](const std::string &key) const { return values.at(key); }
 // end of JS_object implementation
