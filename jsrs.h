@@ -1,6 +1,26 @@
-//
-// Created by nechaido on 25.03.16.
-//
+/*
+The MIT License (MIT)
+
+Copyright (c) 2016 Dmytro Nechai, Nikolai Belochub
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
 
 #ifndef JSTP_CPP_JSRS_H
 #define JSTP_CPP_JSRS_H
@@ -9,6 +29,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <utility>
 
 namespace jstp {
 
@@ -17,6 +38,7 @@ class JSRS {
   typedef std::string string;
   typedef std::vector<JSRS> array;
   typedef std::map<std::string, JSRS> object;
+  typedef std::vector<const string*> object_keys;
 
  public:
 
@@ -36,6 +58,7 @@ class JSRS {
   JSRS(const array &values);       // ARRAY
 
   JSRS(const object &values);      // OBJECT
+  JSRS(const object &values, const object_keys &keys);      // ORDERED_OBJECT
 
 
 
@@ -72,7 +95,7 @@ class JSRS {
    * Return the enclosed std::map if this is an object, or an empty map otherwise.
    */
   const object &object_items() const;
-
+  const object_keys &get_object_keys() const;
 
   /**
    * Return a reference to arr[i] if this is an array, UNDEFINED JSTP otherwise.
@@ -104,8 +127,6 @@ class JSRS {
 
  private:
 
-  std::shared_ptr<JS_value> value;
-
   /**
    * Inner class for storing values
    * Behaviour of methods is similar to JSRS one`s
@@ -124,6 +145,7 @@ class JSRS {
     virtual const string &string_value() const;
     virtual const array &array_items() const;
     virtual const object &object_items() const;
+    virtual const object_keys &get_object_keys() const;
 
     virtual const JSRS &operator[](size_t i) const;
     virtual const JSRS &operator[](const std::string &key) const;
@@ -131,44 +153,111 @@ class JSRS {
     virtual ~JS_value() { }
   };
 
-  class JS_number : JS_value {
+  std::shared_ptr<JS_value> value;
+
+  class JS_number : public JS_value {
    public:
     JS_number(double value);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    double number_value() const;
    private:
     double value;
   };
 
-  class JS_boolean : JS_value {
+  class JS_boolean : public JS_value {
    public:
     JS_boolean(bool value);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    bool bool_value() const;
    private:
     bool value;
   };
 
-  class JS_string : JS_value {
+  class JS_string : public JS_value {
    public:
     JS_string(const string &value);
+    JS_string(const char *value);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    const string &string_value() const;
    private:
     string value;
   };
 
-  class JS_array : JS_value {
+  class JS_array : public JS_value {
    public:
     JS_array(const array &values);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    const array &array_items() const;
+    const JSRS &operator[](size_t i) const;
    private:
     array values;
   };
 
-  class JS_object : JS_value {
+  class JS_object : public JS_value {
    public:
     JS_object(const object &value);
+    JS_object(const object &value, const object_keys &keys);
+
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+
+    const object &object_items() const;
+    const object_keys &get_object_keys() const;
+    const JSRS &operator[](const std::string &key) const;
    private:
     object values;
+    object_keys keys;
   };
 
-  class JS_undefined : JS_value { };
+  class JS_undefined : public JS_value {
+    Type type() const;
 
-  class JS_null : JS_value { };
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+  };
+
+  class JS_null : public JS_value {
+    Type type() const;
+
+    bool equals(const JS_value *other) const;
+    bool less(const JS_value *other) const;
+
+    void dump(string &out) const;
+  };
 
 };
 
