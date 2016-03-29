@@ -627,7 +627,9 @@ void JSRS::JS_array::dump(string &out) const {
     if (i != values.begin()) {
       result << ',';
     }
-    result << i->dump();
+    if (!i->is_undefined()) {
+      result << i->dump();
+    }
   }
   result << ']';
   out = result.str();
