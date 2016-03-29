@@ -1,5 +1,15 @@
 #include "gtest/gtest.h"
-#include "jsrs.h"
+#include "deps.h"
+
+int checksum(std::string s){
+  int result = 0;
+  for(auto sIt : s){
+    if (sIt != ' ' && sIt != '\n'){
+      result ^= sIt;
+    }
+  }
+  return result;
+}
 
 TEST(jsrs_test, jsrs_test_dump_Test1) {
   jstp::JSRS t;
@@ -62,3 +72,23 @@ TEST(jsrs_test, jsrs_test_dump_Test8) {
   EXPECT_EQ(t.dump(), "{arr:[25.5,true],test1:25.5,test2:true,test3:\"test\"}");
 }
 
+TEST(jsrs_test, jsrs_test_dump_TestShouldWork) {
+  std::vector<std::string> arr = testData::validArray();
+  for (auto &iterator : arr) {
+    std::string err = "";
+    jstp::JSRS jsrs = jstp::JSRS::parse(iterator, err);
+    EXPECT_EQ("", err);
+    if(checksum(jsrs.dump()) != checksum(iterator)){
+      EXPECT_EQ(iterator, jsrs.dump()) << "Should be equal to: " << iterator;
+    }
+  }
+}
+
+TEST(jsrs_test, jsrs_test_dump_TestShouldNotWork) {
+  std::vector<std::string> arr = testData::inValidArray();
+  for (auto &iterator : arr) {
+    std::string err = "";
+    jstp::JSRS jsrs = jstp::JSRS::parse(iterator, err);
+    EXPECT_NE("", err);
+  }
+}
