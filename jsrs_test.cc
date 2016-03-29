@@ -1,11 +1,12 @@
 #include "gtest/gtest.h"
-#include "jsrs.h"
+#include "deps.h"
 
-int checksum(std::string s){//TODO implement undefined
+int checksum(std::string s){
   int result = 0;
-  for (auto &sIt : s){
-    if (sIt != ' ' && sIt != '\n')
+  for(auto sIt : s){
+    if (sIt != ' ' && sIt != '\n'){
       result ^= sIt;
+    }
   }
   return result;
 }
@@ -72,99 +73,19 @@ TEST(jsrs_test, jsrs_test_dump_Test8) {
 }
 
 TEST(jsrs_test, jsrs_test_dump_TestShouldWork) {
-  std::vector<std::string> arr;
-  arr.push_back("{\n"
-                    "  name:\"Marcus Aurelius\",\n"
-                    "  passport:\"AE127095\",\n"
-                    "  birth:{\n"
-                    "    date:\"1990-02-15\",\n"
-                    "    place:\"Rome\"\n"
-                    "  },\n"
-                    "  contacts:{\n"
-                    "    email:\"marcus@aurelius.it\",\n"
-                    "    phone:\"+380505551234\",\n"
-                    "    address:{\n"
-                    "      country:\"Ukraine\",\n"
-                    "      city:\"Kiev\",\n"
-                    "      zip:\"03056\",\n"
-                    "      street:\"Pobedy\",\n"
-                    "      building:\"37\",\n"
-                    "      floor:\"1\",\n"
-                    "      room:\"158\"\n"
-                    "    }\n"
-                    "  }\n"
-                    "}");
-  arr.push_back("{\n"
-                    "  obj:{\n"
-                    "    obj:{\n"
-                    "      obj:{\n"
-                    "        obj:{\n"
-                    "          obj:{\n"
-                    "            obj:{\n"
-                    "              obj:{\n"
-                    "                obj:{\n"
-                    "                  obj:{\n"
-                    "                    obj:{\n"
-                    "                      obj:{\n"
-                    "                        obj:{\n"
-                    "                          obj:{\n"
-                    "                            obj:{\n"
-                    "                              name: \"name\"\n"
-                    "                            },\n"
-                    "                              name: \"name\"\n"
-                    "                          },\n"
-                    "                            name: \"name\"\n"
-                    "                        },\n"
-                    "                          name: \"name\"\n"
-                    "                      },\n"
-                    "                        name: \"name\"\n"
-                    "                    },\n"
-                    "                      name: \"name\"\n"
-                    "                  },\n"
-                    "                    name: \"name\"\n"
-                    "                },\n"
-                    "                  name: \"name\"\n"
-                    "              },\n"
-                    "              name: \"name\"\n"
-                    "            },\n"
-                    "            name: \"name\"\n"
-                    "          },\n"
-                    "          name: \"name\"\n"
-                    "        },\n"
-                    "        name: \"name\"\n"
-                    "      },\n"
-                    "      name: \"name\"\n"
-                    "    },\n"
-                    "    name: \"name\"\n"
-                    "  },\n"
-                    "  name : null\n"
-                    "}");
-  arr.push_back("{\n"
-                    "  me: {\n"
-                    "    you1 : [[\"Yep\", \"Yep\", \"Yup\"],, {here_it_is : 42},, 3, \"it`s\"],\n"
-                    "    you2 : [[\"Yep\", \"Yep\", \"Yup\"],, {here_it_is : 42},, 3, \"it`s\"]\n"
-                    "  },\n"
-                    "  you : [[\"Yep\", \"Yep\", \"Yup\"],, {here_it_is : 42},, 3, \"it`s\"]\n"
-                    "}"); //TODO Make it work, Timur said so
-  arr.push_back("{\n"
-                    "  me : [,\"me\",]\n"
-                    "}"); //TODO Make it work, Timur said so
-  arr.push_back("{}"); //TODO Make it work, Timur said so
-  arr.push_back("[]"); //TODO Make it work, Timur said so
+  std::vector<std::string> arr = testData::validArray();
   for (auto &iterator : arr) {
     std::string err = "";
     jstp::JSRS jsrs = jstp::JSRS::parse(iterator, err);
     EXPECT_EQ("", err);
-    if(checksum(jsrs.dump()) == checksum(iterator)){
-      EXPECT_EQ(iterator, jsrs.dump());
+    if(checksum(jsrs.dump()) != checksum(iterator)){
+      EXPECT_EQ(iterator, jsrs.dump()) << "Should be equal to: " << iterator;
     }
   }
 }
 
 TEST(jsrs_test, jsrs_test_dump_TestShouldNotWork) {
-  std::vector<std::string> arr;
-  arr.push_back("{n: nult}"); //TODO This should throw an error, not kill a programm
-  arr.push_back("{n:}");
+  std::vector<std::string> arr = testData::inValidArray();
   for (auto &iterator : arr) {
     std::string err = "";
     jstp::JSRS jsrs = jstp::JSRS::parse(iterator, err);
