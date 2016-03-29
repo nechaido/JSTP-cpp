@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include <sstream>
 #include <iterator>
+#include <iomanip>
+#include <limits>
 
 namespace jstp {
 
@@ -208,7 +210,7 @@ std::string::const_iterator get_end(const std::string::const_iterator &begin,
       type = JSRS::Type::NUL;
       is_found = true;
       t = get_string(begin, begin + 4);
-      if (begin + 4 < end && *t == "null") {
+      if (begin + 4 <= end && *t == "null") {
         result = begin + 4;
       } else {
         result = begin;
@@ -219,7 +221,7 @@ std::string::const_iterator get_end(const std::string::const_iterator &begin,
       type = JSRS::Type::UNDEFINED;
       is_found = true;
       t = get_string(begin, begin + 9);
-      if (begin + 9 < end && *t == "undefined") {
+      if (begin + 9 <= end && *t == "undefined") {
         result = begin + 9;
       } else {
         result = begin;
@@ -281,6 +283,10 @@ std::string::const_iterator get_end(const std::string::const_iterator &begin,
         }
         break;
     }
+  }
+
+  if (type == JSRS::Type::NUMBER && !is_found) {
+    result = end;
   }
 
   return result;
@@ -528,21 +534,36 @@ JSRS JSRS::parse(const string &in, string &err) {
 
 // JS_value implementation
 
+// Empty values
+struct Empty {
+  const std::string string;
+  const std::vector<JSRS> vector;
+  const std::map<std::string, JSRS> map;
+  const std::vector<const std::string *> keys;
+  const JSRS jsrs;
+  Empty() { }
+};
+
+static const Empty &empty() {
+  static const Empty e;
+  return e;
+}
+
 bool JSRS::JS_value::bool_value() const { return false; }
 
 double JSRS::JS_value::number_value() const { return 0.0; }
 
-const JSRS::string &JSRS::JS_value::string_value() const { return *new string(""); }
+const JSRS::string &JSRS::JS_value::string_value() const { return empty().string; }
 
-const JSRS::array &JSRS::JS_value::array_items() const { return *new array(); }
+const JSRS::array &JSRS::JS_value::array_items() const { return empty().vector; }
 
-const JSRS::object &JSRS::JS_value::object_items() const { return *new object(); }
+const JSRS::object &JSRS::JS_value::object_items() const { return empty().map; }
 
-const JSRS::object_keys &JSRS::JS_value::get_object_keys() const { return *new object_keys(); }
+const JSRS::object_keys &JSRS::JS_value::get_object_keys() const { return empty().keys; }
 
-const JSRS &JSRS::JS_value::operator[](size_t i) const { return *new JSRS(); }
+const JSRS &JSRS::JS_value::operator[](size_t i) const { return empty().jsrs; }
 
-const JSRS &JSRS::JS_value::operator[](const std::string &key) const { return *new JSRS(); }
+const JSRS &JSRS::JS_value::operator[](const std::string &key) const { return empty().jsrs; }
 // end of JS_value implementation
 
 // JS_number implementation
@@ -561,7 +582,7 @@ bool JSRS::JS_number::less(const JS_value *other) const {
 
 void JSRS::JS_number::dump(string &out) const {
   std::ostringstream result;
-  result << value;
+  result << std::setprecision(std::numeric_limits<double>::digits10 + 1) << value;
   out = result.str();
 }
 
@@ -632,8 +653,10 @@ bool JSRS::JS_array::equals(const JS_value *other) const {
 }
 
 bool JSRS::JS_array::less(const JS_value *other) const {
-  return false; // TODO(belochub): Implement less for arrays
-  //return other->type() == this->type();
+  string t, o;
+  this->dump(t);
+  other->dump(o);
+  return other->type() == this->type() && t.compare(o) < 0; // TODO(belochub): Implement better less for arrays
 }
 
 void JSRS::JS_array::dump(string &out) const {
@@ -685,8 +708,10 @@ bool JSRS::JS_object::equals(const JS_value *other) const {
 }
 
 bool JSRS::JS_object::less(const JS_value *other) const {
-  return false; // TODO(belochub): Implement less for objects
-  //return other->type() == this->type();
+  string t, o;
+  this->dump(t);
+  other->dump(o);
+  return other->type() == this->type() && t.compare(o) < 0; // TODO(belochub): Implement better less for objects
 }
 
 void JSRS::JS_object::dump(string &out) const {
