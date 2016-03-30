@@ -6,5 +6,5 @@ This project aims to provide: efficient parser for data-only variants of JSTP li
 It does not and would not parse data that contains JS functions.
 
 TODO:
-*Implement JSMD and JSRD realisations
-*Test everething
+* Implement JSMD and JSRD realisations
+* Test everething
