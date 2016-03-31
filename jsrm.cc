@@ -29,9 +29,11 @@ namespace jstp {
   JSRS JSRM::construct(const JSRD& jsrd, std::string &err) {
     if (!this->is_object) {
       err = "Wrong JSRM type";
+      return JSRS();
     }
     if (!jsrd.is_array()) {
       err = "Wrong JSRD type";
+      return JSRS();
     }
   }
 }
