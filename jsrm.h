@@ -33,7 +33,7 @@ namespace jstp {
   class JSRM : public JSRS {
    public:
 
-	JSRM(const JSRS& jsrs) : JSRS(jsrs) {};
+    JSRM(const JSRS& jsrs) : JSRS(jsrs) {};
   };
 }
 
