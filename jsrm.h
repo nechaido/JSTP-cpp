@@ -34,6 +34,8 @@ namespace jstp {
    public:
 
     JSRM(const JSRS& jsrs) : JSRS(jsrs) {};
+    
+    JSRS construct(const JSRD& jsrd, std::string &err);
   };
 }
 
