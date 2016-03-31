@@ -60,8 +60,6 @@ class JSRS {
   JSRS(const object &values);      // OBJECT
   JSRS(const object &values, const object_keys &keys);      // ORDERED_OBJECT
 
-  JSRS(const object_keys &keys, const array &values);
-
 
 
   Type type() const;

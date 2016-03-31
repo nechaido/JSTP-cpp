@@ -13,7 +13,8 @@ class JSRM: public JSRS {
 
  public:
   JSRM(const string &in, string &err);
-  JSRS getJSRD(const string &in, string &err);
+  JSRS getJSRS(const string &in, string &err);
+  JSRS parse(const JSRS *jsrm, const array &values, string &err)
 
 };
 

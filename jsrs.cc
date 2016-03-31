@@ -529,11 +529,6 @@ JSRS JSRS::parse(const string &in, string &err) {
   }
   return result;
 }
-JSRS::JSRS(const object_keys &keys, const array &values) {
-//TODO Make ir work, nigga
-}
-
-
 
 // end of JSRS implementation
 
