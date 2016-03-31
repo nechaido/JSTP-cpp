@@ -31,16 +31,16 @@ SOFTWARE.
 #include <memory>
 #include <utility>
 
-namespace jstp {
+namespace JSTP {
 
 class JSRS {
+
+ public:
 
   typedef std::string string;
   typedef std::vector<JSRS> array;
   typedef std::map<std::string, JSRS> object;
   typedef std::vector<const string*> object_keys;
-
- public:
 
   enum Type {
     UNDEFINED, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
@@ -59,6 +59,8 @@ class JSRS {
 
   JSRS(const object &values);      // OBJECT
   JSRS(const object &values, const object_keys &keys);      // ORDERED_OBJECT
+
+  JSRS(const object_keys &keys, const array &values);
 
 
 
