@@ -161,7 +161,7 @@ const std::string *prepare_string(const std::string &str) {
       if (!comment_mode && !isspace(*i)) {
         writer << *i;
       }
-      if ((comment_mode == kOneline1 && (*i == '\n' || *i == '\r')) ||
+      if ((comment_mode == kOneline && (*i == '\n' || *i == '\r')) ||
           (comment_mode == kMultiline && *(i - 1) == '*' && *i == '/')) {
         comment_mode = kDisabled;
       }
