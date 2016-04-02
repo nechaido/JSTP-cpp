@@ -33,12 +33,12 @@ SOFTWARE.
 
 namespace jstp {
 
-class JSRS {
+class Record {
 
   typedef std::string string;
-  typedef std::vector<JSRS> array;
-  typedef std::map<std::string, JSRS> object;
-  typedef std::vector<const string*> object_keys;
+  typedef std::vector<Record> array;
+  typedef std::map<std::string, Record> object;
+  typedef std::vector<const string *> object_keys;
 
  public:
 
@@ -46,19 +46,19 @@ class JSRS {
     UNDEFINED, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
   };
 
-  JSRS();                          // UNDEFINED
-  JSRS(std::nullptr_t);            // NUL
+  Record();                          // UNDEFINED
+  Record(std::nullptr_t);            // NUL
 
-  JSRS(double val);                // NUMBER
-  JSRS(bool val);                  // BOOL
+  Record(double val);                // NUMBER
+  Record(bool val);                  // BOOL
 
-  JSRS(const string &val);         // STRING
-  JSRS(const char *value);         // STRING
+  Record(const string &val);         // STRING
+  Record(const char *value);         // STRING
 
-  JSRS(const array &values);       // ARRAY
+  Record(const array &values);       // ARRAY
 
-  JSRS(const object &values);      // OBJECT
-  JSRS(const object &values, const object_keys &keys);      // ORDERED_OBJECT
+  Record(const object &values);      // OBJECT
+  Record(const object &values, const object_keys &keys);      // ORDERED_OBJECT
 
 
 
@@ -100,39 +100,39 @@ class JSRS {
   /**
    * Return a reference to arr[i] if this is an array, UNDEFINED JSTP otherwise.
    */
-  const JSRS &operator[](size_t i) const;
+  const Record &operator[](size_t i) const;
 
   /*
    * Return a reference to obj[key] if this is an object, UNDEFINED JSTP otherwise.
    */
-  const JSRS &operator[](const string &key) const;
+  const Record &operator[](const string &key) const;
 
   /**
    * Serializator
    */
-  string dump() const;
+  string stringify() const;
 
   /*
    * Parser of a Record Serialization
    */
-  static JSRS parse(const string &in, string &err);
+  static Record parse(const string &in, string &err);
 
-  bool operator==(const JSRS &rhs) const;
-  bool operator<(const JSRS &rhs) const;
-  bool operator!=(const JSRS &rhs) const;
-  bool operator<=(const JSRS &rhs) const;
-  bool operator>(const JSRS &rhs) const;
-  bool operator>=(const JSRS &rhs) const;
+  bool operator==(const Record &rhs) const;
+  bool operator<(const Record &rhs) const;
+  bool operator!=(const Record &rhs) const;
+  bool operator<=(const Record &rhs) const;
+  bool operator>(const Record &rhs) const;
+  bool operator>=(const Record &rhs) const;
 
 
  private:
 
   /**
    * Inner class for storing values
-   * Behaviour of methods is similar to JSRS one`s
+   * Behaviour of methods is similar to Record one`s
    */
   class JS_value {
-    friend class JSRS;
+    friend class Record;
    protected:
     virtual Type type() const = 0;
 
@@ -147,15 +147,15 @@ class JSRS {
     virtual const object &object_items() const;
     virtual const object_keys &get_object_keys() const;
 
-    virtual const JSRS &operator[](size_t i) const;
-    virtual const JSRS &operator[](const std::string &key) const;
+    virtual const Record &operator[](size_t i) const;
+    virtual const Record &operator[](const std::string &key) const;
 
     virtual ~JS_value() { }
   };
 
   std::shared_ptr<JS_value> value;
 
-  class JS_number : public JS_value {
+  class JS_number: public JS_value {
    public:
     JS_number(double value);
 
@@ -171,7 +171,7 @@ class JSRS {
     double value;
   };
 
-  class JS_boolean : public JS_value {
+  class JS_boolean: public JS_value {
    public:
     JS_boolean(bool value);
 
@@ -187,7 +187,7 @@ class JSRS {
     bool value;
   };
 
-  class JS_string : public JS_value {
+  class JS_string: public JS_value {
    public:
     JS_string(const string &value);
     JS_string(const char *value);
@@ -204,7 +204,7 @@ class JSRS {
     string value;
   };
 
-  class JS_array : public JS_value {
+  class JS_array: public JS_value {
    public:
     JS_array(const array &values);
 
@@ -216,12 +216,12 @@ class JSRS {
     void dump(string &out) const;
 
     const array &array_items() const;
-    const JSRS &operator[](size_t i) const;
+    const Record &operator[](size_t i) const;
    private:
     array values;
   };
 
-  class JS_object : public JS_value {
+  class JS_object: public JS_value {
    public:
     JS_object(const object &value);
     JS_object(const object &value, const object_keys &keys);
@@ -235,13 +235,13 @@ class JSRS {
 
     const object &object_items() const;
     const object_keys &get_object_keys() const;
-    const JSRS &operator[](const std::string &key) const;
+    const Record &operator[](const std::string &key) const;
    private:
     object values;
     object_keys keys;
   };
 
-  class JS_undefined : public JS_value {
+  class JS_undefined: public JS_value {
     Type type() const;
 
     bool equals(const JS_value *other) const;
@@ -250,7 +250,7 @@ class JSRS {
     void dump(string &out) const;
   };
 
-  class JS_null : public JS_value {
+  class JS_null: public JS_value {
     Type type() const;
 
     bool equals(const JS_value *other) const;
