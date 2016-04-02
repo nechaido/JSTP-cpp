@@ -144,7 +144,7 @@ const std::string *prepare_string(const std::string &str) {
   bool string_mode = false;
   enum COMMENT_MODE { kDisabled = 0, kOneline, kMultiline } comment_mode = kDisabled;
   for (auto i = str.begin(); i != str.end(); ++i) {
-    if (*i == '\'' || *i == '\"') {
+    if ((*i == '\"' || *i == '\'') && (i == str.begin() || *(i - 1) != '\\')) {
       string_mode = !string_mode;
     }
     if (!string_mode) {
@@ -161,8 +161,8 @@ const std::string *prepare_string(const std::string &str) {
       if (!comment_mode && !isspace(*i)) {
         writer << *i;
       }
-      if ((comment_mode == 1 && (*i == '\n' || *i == '\r')) ||
-          (comment_mode == 2 && *(i - 1) == '*' && *i == '/')) {
+      if ((comment_mode == kOneline1 && (*i == '\n' || *i == '\r')) ||
+          (comment_mode == kMultiline && *(i - 1) == '*' && *i == '/')) {
         comment_mode = kDisabled;
       }
     } else {
@@ -293,8 +293,8 @@ std::string::const_iterator get_end(const std::string::const_iterator &begin,
 }
 
 const Record *parse_bool(const std::string::const_iterator &begin,
-                       const std::string::const_iterator &end,
-                       std::string *&err) {
+                         const std::string::const_iterator &end,
+                         std::string *&err) {
   const std::string *str = get_string(begin, end);
   Record *result;
   if (*str == "true") {
@@ -310,8 +310,8 @@ const Record *parse_bool(const std::string::const_iterator &begin,
 }
 
 const Record *parse_number(const std::string::const_iterator &begin,
-                         const std::string::const_iterator &end,
-                         std::string *&err) {
+                           const std::string::const_iterator &end,
+                           std::string *&err) {
   std::ostringstream writer;
   std::copy(begin, end, std::ostream_iterator<char>(writer, ""));
   std::string result = writer.str();
@@ -330,8 +330,8 @@ const Record *parse_number(const std::string::const_iterator &begin,
 }
 
 const Record *parse_string(const std::string::const_iterator &begin,
-                         const std::string::const_iterator &end,
-                         std::string *&err) {
+                           const std::string::const_iterator &end,
+                           std::string *&err) {
   std::ostringstream writer;
   try {
     std::copy(begin + 1, end - 1, std::ostream_iterator<char>(writer, ""));
@@ -349,8 +349,8 @@ const Record
     *parse_array(const std::string::const_iterator &begin, const std::string::const_iterator &end, std::string *&err);
 
 const Record *parse_object(const std::string::const_iterator &begin,
-                         const std::string::const_iterator &end,
-                         std::string *&err) {
+                           const std::string::const_iterator &end,
+                           std::string *&err) {
   bool key_mode = true;
   std::string current_key;
   Record::Type current_type;
@@ -425,8 +425,8 @@ const Record *parse_object(const std::string::const_iterator &begin,
 }
 
 const Record *parse_array(const std::string::const_iterator &begin,
-                        const std::string::const_iterator &end,
-                        std::string *&err) {
+                          const std::string::const_iterator &end,
+                          std::string *&err) {
   Record::Type current_type;
   std::vector<Record> array;
 
