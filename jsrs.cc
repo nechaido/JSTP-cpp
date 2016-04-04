@@ -226,118 +226,6 @@ bool get_type(const std::string::const_iterator &begin,
   return result;
 }
 
-std::string::const_iterator get_end(const std::string::const_iterator &begin,
-                                    const std::string::const_iterator &end,
-                                    Record::Type &type) {
-  std::string::const_iterator result;
-  auto i = begin;
-  bool is_found = false;
-  const std::string *t;
-  switch (*(i++)) {
-    case ',':
-    case ']':
-      type = Record::Type::UNDEFINED;
-      return begin + 1;
-    case '{':
-      type = Record::Type::OBJECT;
-      break;
-    case '[':
-      type = Record::Type::ARRAY;
-      break;
-    case '\"':
-    case '\'':
-      type = Record::Type::STRING;
-      break;
-    case 't':
-    case 'f':
-      type = Record::Type::BOOL;
-      break;
-    case 'n':
-      type = Record::Type::NUL;
-      is_found = true;
-      t = get_string(begin, begin + 4);
-      if (begin + 4 <= end && *t == "null") {
-        result = begin + 4;
-      } else {
-        result = begin;
-      }
-      delete t;
-      break;
-    case 'u':
-      type = Record::Type::UNDEFINED;
-      is_found = true;
-      t = get_string(begin, begin + 9);
-      if (begin + 9 <= end && *t == "undefined") {
-        result = begin + 9;
-      } else {
-        result = begin;
-      }
-      delete t;
-      break;
-    default:
-      if (isdigit(*begin) || *begin == '.' || *begin == '+' || *begin == '-') {
-        type = Record::Type::NUMBER;
-      } else {
-        return begin;
-      }
-  }
-
-  int p = 1;
-
-  for (; i != end && !is_found; ++i) {
-    switch (type) {
-      case Record::Type::OBJECT:
-        if (*i == '{') {
-          p++;
-        }
-        if (*i == '}') {
-          p--;
-          if (p == 0) {
-            result = i + 1;
-            is_found = true;
-          }
-        }
-        break;
-      case Record::Type::ARRAY:
-        if (*i == '[') {
-          p++;
-        }
-        if (*i == ']') {
-          p--;
-          if (p == 0) {
-            result = i + 1;
-            is_found = true;
-          }
-        }
-        break;
-      case Record::Type::STRING:
-        if ((*i == '\"' || *i == '\'') && *(i - 1) != '\\') {
-          result = i + 1;
-          is_found = true;
-        }
-        break;
-      case Record::Type::NUMBER:
-        if (!isdigit(*i) && *i != '.') {
-          result = i;
-          is_found = true;
-        }
-        break;
-      case Record::Type::BOOL:
-        if (*i == 'e') {
-          result = i + 1;
-          is_found = true;
-        }
-        break;
-    }
-  }
-
-  if (type == Record::Type::NUMBER && !is_found) {
-    result = end;
-  }
-
-  return result;
-}
-
 const Record *parse_bool(const std::string::const_iterator &begin,
                          std::string::const_iterator &end,
                          std::string *&err) {
@@ -373,7 +261,6 @@ const Record *parse_number(const std::string::const_iterator &begin,
     }
     writer << *i;
   }
-//  std::copy(begin, end, std::ostream_iterator<char>(writer, ""));
   std::string result = writer.str();
   double resulting_value;
   try {
@@ -394,7 +281,7 @@ const Record *parse_string(const std::string::const_iterator &begin,
                            std::string *&err) {
   std::ostringstream writer;
   bool is_ended = false;
-  for (auto i = begin + 1; i != end && !is_ended; ++i) {
+  for (auto i = begin + 1; i != end; ++i) {
     if ((*i == '\"' || *i == '\'') && *(i - 1) != '\\') {
       is_ended = true;
       end = i + 1;
@@ -402,12 +289,6 @@ const Record *parse_string(const std::string::const_iterator &begin,
     }
     writer << *i;
   }
-//    try {
-//      std::copy(begin + 1, end - 1, std::ostream_iterator<char>(writer, ""));
-//    } catch (std::exception &e) {
-//      err = new std::string("Error while parsing string ");
-//      *err += e.what();
-//    }
   if (!is_ended) {
     err = new std::string("Error while parsing string");
   }
@@ -512,8 +393,6 @@ const Record *parse_array(const std::string::const_iterator &begin,
     return new Record(array);
   }
   for (auto i = begin + 1; i != end && !err; ++i) {
-
-    //auto e = get_end(i, end, current_type);
     bool valid = get_type(i, end, current_type);
     auto e = end;
     if (valid) {
@@ -571,8 +450,6 @@ Record Record::parse(const string &in, string &err) {
   const string *to_parse = prepare_string(in);
   Type type;
   string *error = nullptr;
-//  auto end = get_end(to_parse->begin(), to_parse->end(), type);
-//  if (end != to_parse->end()) {
   if (!get_type(to_parse->begin(), to_parse->end(), type)) {
     err = "Invalid type";
     return Record();
