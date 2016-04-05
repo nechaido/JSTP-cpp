@@ -8,3 +8,4 @@ It does not and would not parse data that contains JS functions.
 TODO:
 * Implement JSTP Metadata and JSTP Record
 * Test everything
+* Add comments and provide documentation
