@@ -28,6 +28,7 @@ SOFTWARE.
 #include <iterator>
 #include <iomanip>
 #include <limits>
+#include <cstring>
 
 namespace jstp {
 
@@ -139,10 +140,11 @@ bool Record::operator>=(const Record &rhs) const {
   return this->value->equals(rhs.value.get()) || !this->value->less(rhs.value.get());
 }
 
-const std::string *prepare_string(const std::string &str) {
-  std::ostringstream writer;
+const char *prepare_string(const std::string &str) {
+  char *result = new char[str.length()];
   bool string_mode = false;
   enum COMMENT_MODE { kDisabled = 0, kOneline, kMultiline } comment_mode = kDisabled;
+  std::size_t j = 0;
   for (auto i = str.begin(); i != str.end(); ++i) {
     if ((*i == '\"' || *i == '\'') && (i == str.begin() || *(i - 1) != '\\')) {
       string_mode = !string_mode;
@@ -159,32 +161,33 @@ const std::string *prepare_string(const std::string &str) {
         }
       }
       if (!comment_mode && !isspace(*i)) {
-        writer << *i;
+        result[j++] = *i;
       }
       if ((comment_mode == kOneline && (*i == '\n' || *i == '\r')) ||
           (comment_mode == kMultiline && *(i - 1) == '*' && *i == '/')) {
         comment_mode = kDisabled;
       }
     } else {
-      writer << *i;
+      result[j++] = *i;
     }
 
   }
-
-  return new std::string(writer.str());
+  result[j] = '\0';
+  return result;
 }
 
-const std::string *get_string(const std::string::const_iterator &begin, const std::string::const_iterator &end) {
-  std::ostringstream writer;
-  std::copy(begin, end, std::ostream_iterator<char>(writer, ""));
-  return new std::string(writer.str());
+const char *get_string(const char *begin, const char *end) {
+  size_t size = end - begin;
+  char *result = new char[size + 1];
+  for (std::size_t i = 0; i < size; i++) {
+    result[i] = begin[i];
+  }
+  result[size] = '\0';
+  return result;
 }
 
-bool get_type(const std::string::const_iterator &begin,
-              const std::string::const_iterator &end,
-              Record::Type &type) {
+bool get_type(const char *begin, const char *end, Record::Type &type) {
   bool result = true;
-  const std::string *t;
   switch (*begin) {
     case ',':
     case ']':
@@ -206,15 +209,15 @@ bool get_type(const std::string::const_iterator &begin,
       break;
     case 'n':
       type = Record::Type::NUL;
-      t = get_string(begin, begin + 4);
-      result = (begin + 4 <= end && *t == "null");
-      delete t;
+      if (begin + 4 <= end) {
+        result = (std::strncmp(begin, "null", 4) == 0);
+      }
       break;
     case 'u':
       type = Record::Type::UNDEFINED;
-      t = get_string(begin, begin + 9);
-      result = (begin + 9 <= end && *t == "undefined");
-      delete t;
+      if (begin + 9 <= end) {
+        result = (std::strncmp(begin, "undefined", 9) == 0);
+      }
       break;
     default:
       result = false;
@@ -226,22 +229,16 @@ bool get_type(const std::string::const_iterator &begin,
   return result;
 }
 
-const Record *parse_bool(const std::string::const_iterator &begin,
-                         std::string::const_iterator &end,
+const Record *parse_bool(char *begin,
+                         char *&end,
                          std::string *&err) {
   Record *result;
-  std::ostringstream writer;
-  for (auto i = begin; i != end; ++i) {
-    writer << *i;
-    if (*i == 'e') {
-      end = i + 1;
-      break;
-    }
-  }
-  if (writer.str() == "true") {
+  if (begin + 4 <= end && strncmp(begin, "true", 4) == 0) {
     result = new Record(true);
-  } else if (writer.str() == "false") {
+    end = begin + 5;
+  } else if (begin + 5 <= end && strncmp(begin, "false", 5) == 0) {
     result = new Record(false);
+    end = begin + 6;
   } else {
     err = new std::string("Invalid format: expected boolean");
     result = new Record();
@@ -249,26 +246,10 @@ const Record *parse_bool(const std::string::const_iterator &begin,
   return result;
 }
 
-const Record *parse_number(const std::string::const_iterator &begin,
-                           std::string::const_iterator &end,
+const Record *parse_number(char *begin,
+                           char *&end,
                            std::string *&err) {
-  std::ostringstream writer;
-  writer << *begin;
-  for (auto i = begin + 1; i != end; ++i) {
-    if (!isdigit(*i) && *i != '.') {
-      end = i;
-      break;
-    }
-    writer << *i;
-  }
-  std::string result = writer.str();
-  double resulting_value;
-  try {
-    resulting_value = std::stod(result);
-  } catch (std::exception &e) {
-    err = new std::string("Invalid format: number exception ");
-    *err += e.what();
-  }
+  double resulting_value = atof(begin);
   if (!err) {
     return new Record(resulting_value);
   } else {
