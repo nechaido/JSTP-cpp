@@ -266,8 +266,9 @@ const Record *parse_string(const char *begin,
   }
   if (!err) {
     char *str = new char[size + 1];
-    strncpy(str, begin + size, size);
+    strncpy(str, begin + 1, size);
     str[size] = '\0';
+    size += 2;
     const Record *result = new Record(str);
     delete str;
     return result;
@@ -286,9 +287,8 @@ const Record *parse_object(const char *begin,
                            std::string *&err) {
   bool key_mode = true;
   size = end - begin;
-  char *str = new char[size];
   char current_key[kMaxKeyLength];
-  size_t current_length;
+  size_t current_length = 0;
   Record::Type current_type;
   std::map<std::string, Record> object;
   std::vector<const std::string *> keys;
@@ -324,6 +324,7 @@ const Record *parse_object(const char *begin,
             break;
           case Record::Type::NUMBER:
             t = new Record(atof(begin + i));
+            while (begin[i] != ',' && begin[i] != '}') i++;
             break;
           case Record::Type::BOOL:
             t = parse_bool(begin + i, end, current_length, err);
@@ -350,6 +351,7 @@ const Record *parse_object(const char *begin,
           break;
         }
         current_key[0] = '\0';
+        current_length = 0;
         key_mode = true;
       } else {
         if (!err) {
@@ -372,6 +374,7 @@ const Record *parse_array(const char *begin,
   Record::Type current_type;
   std::vector<Record> array;
   size_t current_length = 0;
+  size = end - begin;
   if (*begin == '[' && *(begin + 1) == ']') { // In case of empty array
     return new Record(array);
   }
@@ -391,6 +394,7 @@ const Record *parse_array(const char *begin,
           break;
         case Record::Type::NUMBER:
           t = new Record(atof(begin + i));
+          while (begin[i] != ',' && begin[i] != ']') i++;
           break;
         case Record::Type::BOOL:
           t = parse_bool(begin + i, end, current_length, err);
