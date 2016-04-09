@@ -104,7 +104,7 @@ class Record {
   /**
    * Return a reference to arr[i] if this is an array, UNDEFINED JSTP otherwise.
    */
-  const Record &operator[](size_t i) const;
+  const Record &operator[](std::size_t i) const;
 
   /*
    * Return a reference to obj[key] if this is an object, UNDEFINED JSTP otherwise.
@@ -151,7 +151,7 @@ class Record {
     virtual const object &object_items() const;
     virtual const object_keys &get_object_keys() const;
 
-    virtual const Record &operator[](size_t i) const;
+    virtual const Record &operator[](std::size_t i) const;
     virtual const Record &operator[](const std::string &key) const;
 
     virtual ~JS_value() { }
@@ -222,7 +222,7 @@ class Record {
     void dump(string &out) const;
 
     const array &array_items() const;
-    const Record &operator[](size_t i) const;
+    const Record &operator[](std::size_t i) const;
    private:
     const array values;
   };

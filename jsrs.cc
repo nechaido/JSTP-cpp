@@ -66,7 +66,8 @@ Record::Record(const object &values, const object_keys &keys) {
 
 Record::Record(object &&values) : value(std::make_shared<JS_object>(std::move(values))) { }
 
-Record::Record(object &&values, object_keys &&keys) : value(std::make_shared<JS_object>(std::move(values), std::move(keys))) { }
+Record::Record(object &&values, object_keys &&keys) : value(std::make_shared<JS_object>(std::move(values),
+                                                                                        std::move(keys))) { }
 
 Record::Type Record::type() const {
   return value->type();
@@ -96,7 +97,7 @@ const Record::object_keys &Record::get_object_keys() const {
   return value->get_object_keys();
 }
 
-const Record &Record::operator[](size_t i) const {
+const Record &Record::operator[](std::size_t i) const {
   return value->operator[](i);
 }
 
@@ -215,7 +216,7 @@ bool get_type(const char *begin, const char *end, Record::Type &type) {
 
 const Record *parse_bool(const char *begin,
                          const char *end,
-                         size_t &size,
+                         std::size_t &size,
                          std::string *&err) {
   Record *result;
   if (begin + 4 <= end && strncmp(begin, "true", 4) == 0) {
@@ -233,11 +234,11 @@ const Record *parse_bool(const char *begin,
 
 const Record *parse_string(const char *begin,
                            const char *end,
-                           size_t &size,
+                           std::size_t &size,
                            std::string *&err) {
   size = end - begin;
   bool is_ended = false;
-  for (size_t i = 1; i < size; ++i) {
+  for (std::size_t i = 1; i < size; ++i) {
     if ((begin[i] == '\"' || begin[i] == '\'') && begin[i - 1] != '\\') {
       is_ended = true;
       size = i - 1;
@@ -260,22 +261,22 @@ const Record *parse_string(const char *begin,
   }
 }
 const Record
-    *parse_array(const char *begin, const char *end, size_t &size, std::string *&err);
+    *parse_array(const char *begin, const char *end, std::size_t &size, std::string *&err);
 
-const size_t kMaxKeyLength = 256;
+const std::size_t kMaxKeyLength = 256;
 
 const Record *parse_object(const char *begin,
                            const char *end,
-                           size_t &size,
+                           std::size_t &size,
                            std::string *&err) {
   bool key_mode = true;
   size = end - begin;
   char current_key[kMaxKeyLength];
-  size_t current_length = 0;
+  std::size_t current_length = 0;
   Record::Type current_type;
   std::map<std::string, Record> object;
   std::vector<const std::string *> keys;
-  for (size_t i = 1; i < size && !err; ++i) {
+  for (std::size_t i = 1; i < size && !err; ++i) {
     if (key_mode) {
       if (begin[i] == ':') {
         key_mode = false;
@@ -352,16 +353,16 @@ const Record *parse_object(const char *begin,
 
 const Record *parse_array(const char *begin,
                           const char *end,
-                          size_t &size,
+                          std::size_t &size,
                           std::string *&err) {
   Record::Type current_type;
   std::vector<Record> array;
-  size_t current_length = 0;
+  std::size_t current_length = 0;
   size = end - begin;
   if (*begin == '[' && *(begin + 1) == ']') { // In case of empty array
     return new Record(std::move(array));
   }
-  for (size_t i = 1; i < size && !err; ++i) {
+  for (std::size_t i = 1; i < size && !err; ++i) {
     bool valid = get_type(begin + i, end, current_type);
     if (valid) {
       const Record *t;
@@ -419,7 +420,7 @@ Record Record::parse(const string &in, string &err) {
   const char *to_parse = prepare_string(in);
   Type type;
   string *error = nullptr;
-  size_t size = strlen(to_parse);
+  std::size_t size = strlen(to_parse);
   if (!get_type(to_parse, to_parse + size, type)) {
     err = "Invalid type";
     return Record();
@@ -493,7 +494,7 @@ const Record::object &Record::JS_value::object_items() const { return empty().ma
 
 const Record::object_keys &Record::JS_value::get_object_keys() const { return empty().keys; }
 
-const Record &Record::JS_value::operator[](size_t i) const { return empty().jsrs; }
+const Record &Record::JS_value::operator[](std::size_t i) const { return empty().jsrs; }
 
 const Record &Record::JS_value::operator[](const std::string &key) const { return empty().jsrs; }
 // end of JS_value implementation
@@ -578,7 +579,7 @@ Record::Type Record::JS_array::type() const { return Record::Type::ARRAY; }
 bool Record::JS_array::equals(const JS_value *other) const {
   bool result = other->type() == this->type() && this->array_items().size() == other->array_items().size();
   if (result) {
-    for (size_t i = 0; i < this->array_items().size(); i++) {
+    for (std::size_t i = 0; i < this->array_items().size(); i++) {
       if (this->array_items()[i] != other->array_items()[i]) {
         result = false;
         break;
@@ -612,7 +613,7 @@ void Record::JS_array::dump(string &out) const {
 
 const Record::array &Record::JS_array::array_items() const { return values; }
 
-const Record &Record::JS_array::operator[](size_t i) const { return values[i]; }
+const Record &Record::JS_array::operator[](std::size_t i) const { return values[i]; }
 // end of JS_array implementation
 
 // JS_object implementation
