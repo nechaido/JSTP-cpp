@@ -254,7 +254,7 @@ const Record *parse_string(const char *begin,
     str[size] = '\0';
     size += 2;
     const Record *result = new Record(str);
-    delete str;
+    delete [] str;
     return result;
   } else {
     return new Record();
@@ -455,7 +455,7 @@ Record Record::parse(const string &in, string &err) {
   if (size != strlen(to_parse)) {
     error = new string("Invalid format");
   }
-  delete to_parse;
+  delete [] to_parse;
   if (error) {
     err = *error;
     delete error;
