@@ -34,33 +34,23 @@ namespace jstp {
 
 // Record implementation
 
-Record::Record() {
-  value = std::make_shared<JS_undefined>();
-}
+Record::Record() : value(std::make_shared<JS_undefined>()) { }
 
-Record::Record(std::nullptr_t) {
-  value = std::make_shared<JS_null>();
-}
+Record::Record(std::nullptr_t) : value(std::make_shared<JS_null>()) { }
 
-Record::Record(double val) {
-  value = std::make_shared<JS_number>(val);
-}
+Record::Record(double val) : value(std::make_shared<JS_number>(val)) { }
 
-Record::Record(bool val) {
-  value = std::make_shared<JS_boolean>(val);
-}
+Record::Record(bool val) : value(std::make_shared<JS_boolean>(val)) { }
 
-Record::Record(const string &val) {
-  value = std::make_shared<JS_string>(val);
-}
+Record::Record(const string &val) : value(std::make_shared<JS_string>(val)) { }
 
-Record::Record(const char *value) {
-  this->value = std::make_shared<JS_string>(value);
-}
+Record::Record(const char *value) : value(std::make_shared<JS_string>(value)) { }
 
-Record::Record(const array &values) {
-  value = std::make_shared<JS_array>(values);
-}
+Record::Record(string &&val) : value(std::make_shared<JS_string>(std::move(val))) { }
+
+Record::Record(const array &values) : value(std::make_shared<JS_array>(values)) { }
+
+Record::Record(array &&values) : value(std::make_shared<JS_array>(std::move(values))) { }
 
 Record::Record(const object &values) {
   object_keys keys;
@@ -73,6 +63,10 @@ Record::Record(const object &values) {
 Record::Record(const object &values, const object_keys &keys) {
   value = std::make_shared<JS_object>(values, keys);
 }
+
+Record::Record(object &&values) : value(std::make_shared<JS_object>(std::move(values))) { }
+
+Record::Record(object &&values, object_keys &&keys) : value(std::make_shared<JS_object>(std::move(values), std::move(keys))) { }
 
 Record::Type Record::type() const {
   return value->type();
@@ -302,7 +296,7 @@ const Record *parse_object(const char *begin,
       } else if (isalnum(begin[i]) || begin[i] == '_') {
         current_length++;
       } else if (begin[i] == '}') {
-        return new Record(object); // In case of empty object
+        return new Record(std::move(object)); // In case of empty object
       } else {
         if (!err) {
           err = new std::string("Invalid format in object: key is invalid");
@@ -338,7 +332,7 @@ const Record *parse_object(const char *begin,
             current_length = 4;
             break;
         }
-        auto ins = object.insert(std::make_pair(current_key, Record(*t)));
+        auto ins = object.insert(std::move(std::make_pair(current_key, std::move(Record(*t)))));
         keys.push_back(&ins.first->first);
         delete t;
         i += current_length;
@@ -364,7 +358,7 @@ const Record *parse_object(const char *begin,
     return new Record();
   }
 
-  return new Record(object, keys);
+  return new Record(std::move(object), std::move(keys));
 }
 
 const Record *parse_array(const char *begin,
@@ -376,7 +370,7 @@ const Record *parse_array(const char *begin,
   size_t current_length = 0;
   size = end - begin;
   if (*begin == '[' && *(begin + 1) == ']') { // In case of empty array
-    return new Record(array);
+    return new Record(std::move(array));
   }
   for (size_t i = 1; i < size && !err; ++i) {
     bool valid = get_type(begin + i, end, current_type);
@@ -407,7 +401,7 @@ const Record *parse_array(const char *begin,
           current_length = 4;
           break;
       }
-      array.push_back(Record(*t));
+      array.push_back(std::move(Record(*t)));
       delete t;
       i += current_length;
       current_length = 0;
@@ -429,7 +423,7 @@ const Record *parse_array(const char *begin,
     return new Record();
   }
 
-  return new Record(array);
+  return new Record(std::move(array));
 }
 
 Record Record::parse(const string &in, string &err) {
@@ -563,6 +557,8 @@ Record::JS_string::JS_string(const string &value) : value(value) { }
 
 Record::JS_string::JS_string(const char *value) : value(value) { }
 
+Record::JS_string::JS_string(string &&value) : value(std::move(value)) { }
+
 Record::Type Record::JS_string::type() const { return Record::Type::STRING; }
 
 bool Record::JS_string::equals(const JS_value *other) const {
@@ -585,6 +581,8 @@ const Record::string &Record::JS_string::string_value() const { return value; }
 // JS_array implementation
 
 Record::JS_array::JS_array(const array &values) : values(values) { }
+
+Record::JS_array::JS_array(array &&values) : values(std::move(values)) { }
 
 Record::Type Record::JS_array::type() const { return Record::Type::ARRAY; }
 
@@ -632,12 +630,16 @@ const Record &Record::JS_array::operator[](size_t i) const { return values[i]; }
 
 Record::JS_object::JS_object(const object &value) : values(value) { }
 
+Record::JS_object::JS_object(object &&value) : values(std::move(value)) { }
+
 Record::JS_object::JS_object(const object &value, const object_keys &keys) {
   for (auto i = keys.begin(); i != keys.end(); ++i) {
     auto ins = values.insert(std::make_pair(**i, value.at(**i)));
     this->keys.push_back(&ins.first->first);
   }
 }
+
+Record::JS_object::JS_object(object &&value, object_keys &&keys) : values(std::move(value)), keys(std::move(keys)) { }
 
 Record::Type Record::JS_object::type() const { return Record::Type::OBJECT; }
 
