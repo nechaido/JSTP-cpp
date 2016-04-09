@@ -231,17 +231,6 @@ const Record *parse_bool(const char *begin,
   return result;
 }
 
-/*const Record *parse_number(char *begin,
-                           char *&end,
-                           std::string *&err) {
-  double resulting_value = atof(begin);
-  if (!err) {
-    return new Record(resulting_value);
-  } else {
-    return new Record();
-  }
-}*/
-
 const Record *parse_string(const char *begin,
                            const char *end,
                            size_t &size,
