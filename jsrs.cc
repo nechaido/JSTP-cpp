@@ -232,6 +232,18 @@ const Record *parse_bool(const char *begin,
   return result;
 }
 
+const Record *parse_number(const char *begin,
+                           const char *end,
+                           std::size_t &size,
+                           std::string *&err) {
+  Record *result = new Record(atof(begin));
+  size = end - begin;
+  std::size_t i = 0;
+  while (begin[i] != ',' && begin[i] != '}' && begin[i] != ']' && i < size) i++;
+  size = i;
+  return result;
+}
+
 const Record *parse_string(const char *begin,
                            const char *end,
                            std::size_t &size,
@@ -254,7 +266,7 @@ const Record *parse_string(const char *begin,
     str[size] = '\0';
     size += 2;
     const Record *result = new Record(str);
-    delete [] str;
+    delete[] str;
     return result;
   } else {
     return new Record();
@@ -263,7 +275,31 @@ const Record *parse_string(const char *begin,
 const Record
     *parse_array(const char *begin, const char *end, std::size_t &size, std::string *&err);
 
+const Record *parse_object(const char *begin,
+                           const char *end,
+                           std::size_t &size,
+                           std::string *&err);
+
 const std::size_t kMaxKeyLength = 256;
+
+const Record *parse_undefined(const char *begin, const char *end, std::size_t &size, std::string *&err) {
+  const Record *result = new Record();
+  if (*begin == ',') {
+    size = 0;
+  } else if (*begin == 'u') {
+    size = 9;
+  }
+  return result;
+}
+
+const Record *parse_null(const char *begin, const char *end, std::size_t &size, std::string *&err) {
+  const Record *result = new Record(nullptr);
+  size = 4;
+  return result;
+}
+
+const Record *(*parse_func[])(const char *, const char *, std::size_t &, std::string *&) =
+    {&parse_undefined, &parse_null, &parse_bool, &parse_number, &parse_string, &parse_array, &parse_object};
 
 const Record *parse_object(const char *begin,
                            const char *end,
@@ -296,32 +332,7 @@ const Record *parse_object(const char *begin,
       bool valid = get_type(begin + i, end, current_type);
       if (valid) {
         const Record *t;
-        switch (current_type) {
-          case Record::Type::OBJECT:
-            t = parse_object(begin + i, end, current_length, err);
-            break;
-          case Record::Type::ARRAY:
-            t = parse_array(begin + i, end, current_length, err);
-            break;
-          case Record::Type::STRING:
-            t = parse_string(begin + i, end, current_length, err);
-            break;
-          case Record::Type::NUMBER:
-            t = new Record(atof(begin + i));
-            while (begin[i] != ',' && begin[i] != '}') i++;
-            break;
-          case Record::Type::BOOL:
-            t = parse_bool(begin + i, end, current_length, err);
-            break;
-          case Record::Type::UNDEFINED:
-            t = new Record();
-            current_length = 9;
-            break;
-          case Record::Type::NUL:
-            t = new Record(nullptr);
-            current_length = 4;
-            break;
-        }
+        t = (parse_func[current_type])(begin + i, end, current_length, err);
         auto ins = object.insert(std::move(std::make_pair(current_key, std::move(Record(*t)))));
         keys.push_back(&ins.first->first);
         delete t;
@@ -366,31 +377,7 @@ const Record *parse_array(const char *begin,
     bool valid = get_type(begin + i, end, current_type);
     if (valid) {
       const Record *t;
-      switch (current_type) {
-        case Record::Type::OBJECT:
-          t = parse_object(begin + i, end, current_length, err);
-          break;
-        case Record::Type::ARRAY:
-          t = parse_array(begin + i, end, current_length, err);
-          break;
-        case Record::Type::STRING:
-          t = parse_string(begin + i, end, current_length, err);
-          break;
-        case Record::Type::NUMBER:
-          t = new Record(atof(begin + i));
-          while (begin[i] != ',' && begin[i] != ']') i++;
-          break;
-        case Record::Type::BOOL:
-          t = parse_bool(begin + i, end, current_length, err);
-          break;
-        case Record::Type::UNDEFINED:
-          t = new Record();
-          break;
-        case Record::Type::NUL:
-          t = new Record(nullptr);
-          current_length = 4;
-          break;
-      }
+      t = (parse_func[current_type])(begin + i, end, current_length, err);
       array.push_back(std::move(Record(*t)));
       delete t;
       i += current_length;
@@ -427,35 +414,13 @@ Record Record::parse(const string &in, string &err) {
   }
   Record result;
   const Record *t;
-  switch (type) {
-    case ARRAY:
-      t = parse_array(to_parse, to_parse + size, size, error);
-      break;
-    case BOOL:
-      t = parse_bool(to_parse, to_parse + size, size, error);
-      break;
-    case OBJECT:
-      t = parse_object(to_parse, to_parse + size, size, error);
-      break;
-    case NUMBER:
-      t = new Record(atof(to_parse));
-      break;
-    case STRING:
-      t = parse_string(to_parse, to_parse + size, size, error);
-      break;
-    case UNDEFINED:
-      t = new Record();
-      break;
-    case NUL:
-      t = new Record(nullptr);
-      break;
-  }
+  t = (parse_func[type])(to_parse, to_parse + size, size, error);
   result = Record(*t);
   delete t;
   if (size != strlen(to_parse)) {
     error = new string("Invalid format");
   }
-  delete [] to_parse;
+  delete[] to_parse;
   if (error) {
     err = *error;
     delete error;
