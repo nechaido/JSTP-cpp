@@ -136,7 +136,7 @@ bool Record::operator>=(const Record &rhs) const {
 }
 
 const char *prepare_string(const std::string &str) {
-  char *result = new char[str.length()];
+  char *result = new char[str.length() + 1];
   bool string_mode = false;
   enum { kDisabled = 0, kOneline, kMultiline } comment_mode = kDisabled;
   std::size_t j = 0;
@@ -230,7 +230,7 @@ const Record *(*parse_func[])(const char *, const char *, std::size_t &, std::st
 
 const Record *parse_undefined(const char *begin, const char *end, std::size_t &size, std::string *&err) {
   const Record *result = new Record();
-  if (*begin == ',') {
+  if (*begin == ',' || *begin == ']') {
     size = 0;
   } else if (*begin == 'u') {
     size = 9;
