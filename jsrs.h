@@ -43,7 +43,7 @@ class Record {
  public:
 
   enum Type {
-    UNDEFINED, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
+    UNDEFINED = 0, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
   };
 
   Record();                          // UNDEFINED
@@ -54,11 +54,15 @@ class Record {
 
   Record(const string &val);         // STRING
   Record(const char *value);         // STRING
+  Record(string &&val);              // STRING
 
   Record(const array &values);       // ARRAY
+  Record(array &&values);            // ARRAY
 
   Record(const object &values);      // OBJECT
   Record(const object &values, const object_keys &keys);      // ORDERED_OBJECT
+  Record(object &&values);           // OBJECT
+  Record(object &&values, object_keys &&keys);      // ORDERED_OBJECT
 
 
 
@@ -100,7 +104,7 @@ class Record {
   /**
    * Return a reference to arr[i] if this is an array, UNDEFINED JSTP otherwise.
    */
-  const Record &operator[](size_t i) const;
+  const Record &operator[](std::size_t i) const;
 
   /*
    * Return a reference to obj[key] if this is an object, UNDEFINED JSTP otherwise.
@@ -147,7 +151,7 @@ class Record {
     virtual const object &object_items() const;
     virtual const object_keys &get_object_keys() const;
 
-    virtual const Record &operator[](size_t i) const;
+    virtual const Record &operator[](std::size_t i) const;
     virtual const Record &operator[](const std::string &key) const;
 
     virtual ~JS_value() { }
@@ -168,7 +172,7 @@ class Record {
 
     double number_value() const;
    private:
-    double value;
+    const double value;
   };
 
   class JS_boolean: public JS_value {
@@ -184,13 +188,14 @@ class Record {
 
     bool bool_value() const;
    private:
-    bool value;
+    const bool value;
   };
 
   class JS_string: public JS_value {
    public:
     JS_string(const string &value);
     JS_string(const char *value);
+    JS_string(string &&value);
 
     Type type() const;
 
@@ -201,12 +206,13 @@ class Record {
 
     const string &string_value() const;
    private:
-    string value;
+    const string value;
   };
 
   class JS_array: public JS_value {
    public:
     JS_array(const array &values);
+    JS_array(array &&values);
 
     Type type() const;
 
@@ -216,15 +222,17 @@ class Record {
     void dump(string &out) const;
 
     const array &array_items() const;
-    const Record &operator[](size_t i) const;
+    const Record &operator[](std::size_t i) const;
    private:
-    array values;
+    const array values;
   };
 
   class JS_object: public JS_value {
    public:
     JS_object(const object &value);
+    JS_object(object &&value);
     JS_object(const object &value, const object_keys &keys);
+    JS_object(object &&value, object_keys &&keys);
 
     Type type() const;
 
