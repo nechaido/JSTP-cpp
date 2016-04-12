@@ -43,7 +43,7 @@ class Record {
  public:
 
   enum Type {
-    UNDEFINED, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
+    UNDEFINED = 0, NUL, BOOL, NUMBER, STRING, ARRAY, OBJECT
   };
 
   Record();                          // UNDEFINED

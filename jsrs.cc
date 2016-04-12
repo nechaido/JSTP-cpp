@@ -138,7 +138,7 @@ bool Record::operator>=(const Record &rhs) const {
 const char *prepare_string(const std::string &str) {
   char *result = new char[str.length()];
   bool string_mode = false;
-  enum COMMENT_MODE { kDisabled = 0, kOneline, kMultiline } comment_mode = kDisabled;
+  enum { kDisabled = 0, kOneline, kMultiline } comment_mode = kDisabled;
   std::size_t j = 0;
   for (auto i = str.begin(); i != str.end(); ++i) {
     if ((*i == '\"' || *i == '\'') && (i == str.begin() || *(i - 1) != '\\')) {
@@ -274,9 +274,10 @@ const Record *parse_number(const char *begin, const char *end, std::size_t &size
 
 const Record *parse_string(const char *begin, const char *end, std::size_t &size, std::string *&err) {
   size = end - begin;
+  enum { kApostrophe = 0, kQMarks} string_mode = (*begin == '\'') ? kApostrophe : kQMarks;
   bool is_ended = false;
   for (std::size_t i = 1; i < size; ++i) {
-    if ((begin[i] == '\"' || begin[i] == '\'') && begin[i - 1] != '\\') {
+    if ((string_mode == kQMarks && begin[i] == '\"') || (string_mode == kApostrophe && begin[i] == '\'') && begin[i - 1] != '\\') {
       is_ended = true;
       size = i - 1;
       break;
