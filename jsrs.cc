@@ -250,10 +250,10 @@ const Record *parse_bool(const char *begin, const char *end, std::size_t &size, 
   Record *result;
   if (begin + 4 <= end && strncmp(begin, "true", 4) == 0) {
     result = new Record(true);
-    size = 5;
+    size = 4;
   } else if (begin + 5 <= end && strncmp(begin, "false", 5) == 0) {
     result = new Record(false);
-    size = 6;
+    size = 5;
   } else {
     if (!err) {
       err = new std::string("Invalid format: expected boolean");
