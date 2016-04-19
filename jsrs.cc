@@ -215,21 +215,20 @@ bool get_type(const char *begin, const char *end, Record::Type &type) {
 }
 
 // Parse functions
-const Record *parse_undefined(const char *begin, const char *end, std::size_t &size, std::string *&err);
-const Record *parse_null(const char *begin, const char *end, std::size_t &size, std::string *&err);
-const Record *parse_bool(const char *begin, const char *end, std::size_t &size, std::string *&err);
-const Record *parse_number(const char *begin, const char *end, std::size_t &size, std::string *&err);
-const Record *parse_string(const char *begin, const char *end, std::size_t &size, std::string *&err);
-const Record *parse_array(const char *begin, const char *end, std::size_t &size, std::string *&err);
-const Record *parse_object(const char *begin, const char *end, std::size_t &size, std::string *&err);
+Record parse_undefined(const char *begin, const char *end, std::size_t &size, std::string *&err);
+Record parse_null(const char *begin, const char *end, std::size_t &size, std::string *&err);
+Record parse_bool(const char *begin, const char *end, std::size_t &size, std::string *&err);
+Record parse_number(const char *begin, const char *end, std::size_t &size, std::string *&err);
+Record parse_string(const char *begin, const char *end, std::size_t &size, std::string *&err);
+Record parse_array(const char *begin, const char *end, std::size_t &size, std::string *&err);
+Record parse_object(const char *begin, const char *end, std::size_t &size, std::string *&err);
 
 const std::size_t kMaxKeyLength = 256;
 
-const Record *(*parse_func[])(const char *, const char *, std::size_t &, std::string *&) =
+Record (*parse_func[])(const char *, const char *, std::size_t &, std::string *&) =
     {&parse_undefined, &parse_null, &parse_bool, &parse_number, &parse_string, &parse_array, &parse_object};
 
-const Record *parse_undefined(const char *begin, const char *end, std::size_t &size, std::string *&err) {
-  const Record *result = new Record();
+Record parse_undefined(const char *begin, const char *end, std::size_t &size, std::string *&err) {
   if (*begin == ',' || *begin == ']') {
     size = 0;
   } else if (*begin == 'u') {
@@ -237,34 +236,33 @@ const Record *parse_undefined(const char *begin, const char *end, std::size_t &s
   } else {
     err = new std::string("Invalid format of undefined value");
   }
-  return result;
+  return Record();
 }
 
-const Record *parse_null(const char *begin, const char *end, std::size_t &size, std::string *&err) {
-  const Record *result = new Record(nullptr);
+Record parse_null(const char *begin, const char *end, std::size_t &size, std::string *&err) {
   size = 4;
-  return result;
+  return Record(nullptr);
 }
 
-const Record *parse_bool(const char *begin, const char *end, std::size_t &size, std::string *&err) {
-  Record *result;
+Record parse_bool(const char *begin, const char *end, std::size_t &size, std::string *&err) {
+  Record result;
   if (begin + 4 <= end && strncmp(begin, "true", 4) == 0) {
-    result = new Record(true);
+    result = Record(true);
     size = 4;
   } else if (begin + 5 <= end && strncmp(begin, "false", 5) == 0) {
-    result = new Record(false);
+    result = Record(false);
     size = 5;
   } else {
     if (!err) {
       err = new std::string("Invalid format: expected boolean");
     }
-    result = new Record();
+    result = Record();
   }
   return result;
 }
 
-const Record *parse_number(const char *begin, const char *end, std::size_t &size, std::string *&err) {
-  Record *result = new Record(atof(begin));
+Record parse_number(const char *begin, const char *end, std::size_t &size, std::string *&err) {
+  Record result = Record(atof(begin));
   size = end - begin;
   std::size_t i = 0;
   while (begin[i] != ',' && begin[i] != '}' && begin[i] != ']' && i < size) i++;
@@ -272,7 +270,7 @@ const Record *parse_number(const char *begin, const char *end, std::size_t &size
   return result;
 }
 
-const Record *parse_string(const char *begin, const char *end, std::size_t &size, std::string *&err) {
+Record parse_string(const char *begin, const char *end, std::size_t &size, std::string *&err) {
   size = end - begin;
   enum { kApostrophe = 0, kQMarks} string_mode = (*begin == '\'') ? kApostrophe : kQMarks;
   bool is_ended = false;
@@ -291,15 +289,15 @@ const Record *parse_string(const char *begin, const char *end, std::size_t &size
     strncpy(str, begin + 1, size);
     str[size] = '\0';
     size += 2;
-    const Record *result = new Record(str);
+    Record result = Record(str);
     delete[] str;
     return result;
   } else {
-    return new Record();
+    return Record();
   }
 }
 
-const Record *parse_object(const char *begin, const char *end, std::size_t &size, std::string *&err) {
+Record parse_object(const char *begin, const char *end, std::size_t &size, std::string *&err) {
   bool key_mode = true;
   size = end - begin;
   char current_key[kMaxKeyLength];
@@ -307,7 +305,7 @@ const Record *parse_object(const char *begin, const char *end, std::size_t &size
   Record::Type current_type;
   std::map<std::string, Record> object;
   std::vector<const std::string *> keys;
-  const Record *t;
+  Record t;
   for (std::size_t i = 1; i < size && !err; ++i) {
     if (key_mode) {
       if (begin[i] == ':') {
@@ -318,7 +316,7 @@ const Record *parse_object(const char *begin, const char *end, std::size_t &size
       } else if (isalnum(begin[i]) || begin[i] == '_') {
         current_length++;
       } else if (begin[i] == '}') {
-        return new Record(std::move(object)); // In case of empty object
+        return Record(std::move(object)); // In case of empty object
       } else {
         if (!err) {
           err = new std::string("Invalid format in object: key is invalid");
@@ -328,9 +326,8 @@ const Record *parse_object(const char *begin, const char *end, std::size_t &size
       bool valid = get_type(begin + i, end, current_type);
       if (valid) {
         t = (parse_func[current_type])(begin + i, end, current_length, err);
-        auto ins = object.insert(std::move(std::make_pair(current_key, std::move(Record(*t)))));
+        auto ins = object.insert(std::move(std::make_pair(current_key, std::move(t))));
         keys.push_back(&ins.first->first);
-        delete t;
         i += current_length;
         if (begin[i] != ',' && begin[i] != '}') {
           if (!err) {
@@ -351,27 +348,26 @@ const Record *parse_object(const char *begin, const char *end, std::size_t &size
     }
   }
   if (err) {
-    return new Record();
+    return Record();
   }
 
-  return new Record(std::move(object), std::move(keys));
+  return Record(std::move(object), std::move(keys));
 }
 
-const Record *parse_array(const char *begin, const char *end, std::size_t &size, std::string *&err) {
+Record parse_array(const char *begin, const char *end, std::size_t &size, std::string *&err) {
   Record::Type current_type;
   std::vector<Record> array;
   std::size_t current_length = 0;
   size = end - begin;
   if (*begin == '[' && *(begin + 1) == ']') { // In case of empty array
-    return new Record(std::move(array));
+    return Record(std::move(array));
   }
-  const Record *t;
+  Record t;
   for (std::size_t i = 1; i < size && !err; ++i) {
     bool valid = get_type(begin + i, end, current_type);
     if (valid) {
       t = (parse_func[current_type])(begin + i, end, current_length, err);
-      array.push_back(std::move(Record(*t)));
-      delete t;
+      array.push_back(std::move(t));
       i += current_length;
       current_length = 0;
       if (begin[i] != ',' && begin[i] != ']') {
@@ -389,10 +385,10 @@ const Record *parse_array(const char *begin, const char *end, std::size_t &size,
     }
   }
   if (err) {
-    return new Record();
+    return Record();
   }
 
-  return new Record(std::move(array));
+  return Record(std::move(array));
 }
 // End of parse functions
 
@@ -405,10 +401,7 @@ Record Record::parse(const string &in, string &err) {
     err = "Invalid type";
     return Record();
   }
-  Record result;
-  const Record *t = (parse_func[type])(to_parse, to_parse + size, size, error);
-  result = Record(*t);
-  delete t;
+  Record result = (parse_func[type])(to_parse, to_parse + size, size, error);
   if (size != strlen(to_parse)) {
     error = new string("Invalid format");
   }
