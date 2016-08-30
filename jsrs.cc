@@ -653,7 +653,7 @@ bool Record::JS_null::less(const JS_value *other) const {
 }
 
 void Record::JS_null::dump(string &out) const { out = "null"; }
-// end of JS_undefined implementation
+// end of JS_null implementation
 }
 
 
