@@ -510,9 +510,9 @@ bool Record::JS_string::less(const JS_value *other) const {
 }
 
 void Record::JS_string::dump(string &out) const {
-  std::ostringstream result;
-  result << "\"" << value << "\"";
-  out = result.str();
+  std::string result;
+  result += "\"" + value + "\"";
+  out = result;
 }
 
 const Record::string &Record::JS_string::string_value() const { return value; }
@@ -547,18 +547,18 @@ bool Record::JS_array::less(const JS_value *other) const {
 }
 
 void Record::JS_array::dump(string &out) const {
-  std::ostringstream result;
-  result << '[';
+  std::string result;
+  result += '[';
   for (auto i = values.begin(); i != values.end(); ++i) {
     if (i != values.begin()) {
-      result << ',';
+      result += ',';
     }
     if (!i->is_undefined()) {
-      result << i->stringify();
+      result += i->stringify();
     }
   }
-  result << ']';
-  out = result.str();
+  result += ']';
+  out = result;
 }
 
 const Record::array &Record::JS_array::array_items() const { return values; }
@@ -606,16 +606,16 @@ bool Record::JS_object::less(const JS_value *other) const {
 }
 
 void Record::JS_object::dump(string &out) const {
-  std::ostringstream result;
-  result << '{';
+  std::string result;
+  result += '{';
   for (auto i = keys.begin(); i != keys.end(); ++i) {
     if (i != keys.begin()) {
-      result << ',';
+      result += ',';
     }
-    result << **i << ':' << values.at(**i).stringify();
+    result += **i + ':' + values.at(**i).stringify();
   }
-  result << '}';
-  out = result.str();
+  result += '}';
+  out = result;
 }
 
 const Record::object &Record::JS_object::object_items() const { return values; }
